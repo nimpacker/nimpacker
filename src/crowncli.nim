@@ -137,6 +137,8 @@ proc buildMacos(wwwroot = "", release = false, flags: seq[string]) =
       copyFile(path, cachePath)
       discard images.mapIt(tryRemoveFile(it.filePath))
     plist["CFBundleIconFile"] = newJString(extractFilename path)
+  if not dirExists(appDir / "Contents" ):
+    createDir(appDir / "Contents" )
   writePlist(plist, appDir / "Contents" / "Info.plist")
   var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release, flags)
   let finalCMD = cmd.join(" ")
