@@ -23,6 +23,7 @@ jsonSchema:
   CocoaAppInfo:
     CFBundleDisplayName: string
     CFBundleVersion: string
+    CFBundleShortVersionString ?: string
     CFBundleExecutable: string
     CFBundleIdentifier?:string
     CFBundlePackageType ?: string

@@ -18,6 +18,7 @@ import rcedit, options
 include crowncli/cocoaappinfo
 import oids
 import std/sha1
+import semver
 
 type
   MyImage = ref Image[ColorRGBAU]
@@ -105,12 +106,14 @@ proc buildMacos(wwwroot = "", release = false, flags: seq[string]) =
         )
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
   let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson): else: none(NSAppTransportSecurity)
+  let ver = parseVersion(pkgInfo.version) 
   let appInfo = create(CocoaAppInfo,
     NSHighResolutionCapable = some(true),
     CFBundlePackageType = some("APPL"),
     CFBundleExecutable = pkgInfo.name,
     CFBundleDisplayName = pkgInfo.name,
     CFBundleVersion = pkgInfo.version,
+    CFBundleShortVersionString = some(fmt"{ver.major}.{ver.minor}.{ver.patch}"),
     CFBundleIdentifier = none(string),
     NSAppTransportSecurity = sec,
     CFBundleIconName = none(string),

@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.2"
+version       = "0.1.3"
 author        = "bung87"
 description   = "A new awesome nimble package"
 license       = "MIT"
@@ -11,6 +11,7 @@ bin           = @["crowncli"]
 # Dependencies
 
 requires "nim >= 1.4.4"
+requires "semver"
 requires "plists"
 requires "cligen >= 1.5"
 requires "imageman"
