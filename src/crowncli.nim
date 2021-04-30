@@ -13,7 +13,7 @@ include crowncli/packageinfo
 import imageman/images
 import imageman/colors
 import imageman/resize
-import zopflipng
+from zopflipng import optimizePNG
 import rcedit, options
 include crowncli/cocoaappinfo
 import oids
@@ -66,7 +66,7 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     let img = cast[MyImage](png)
     let img2 = img[].resizedBicubic(size, size)
     let ad = cast[ptr UnCheckedArray[byte]](img2.data[0].unsafeAddr)
-    discard zopflipng.savePNG32(tmpName, toOpenArray(ad, 0, img2.data.len * 4 - 1), img2.width, img2.height)
+    discard savePNG32(tmpName, toOpenArray(ad, 0, img2.data.len * 4 - 1), img2.width, img2.height)
     try:
       optimizePNG(tmpName, optName)
     except Exception as e:
