@@ -104,7 +104,7 @@ proc buildMacos(wwwroot = "", release = false, flags: seq[string]) =
           CFBundleTypeRole = some(a["role"].getStr())
         )
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
-  let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson): else: none(NSAppTransportSecurity)
+  let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
   let appInfo = create(CocoaAppInfo,
     NSHighResolutionCapable = some(true),
     CFBundlePackageType = some("APPL"),

@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.4"
 author        = "bung87"
 description   = "A new awesome nimble package"
 license       = "MIT"
@@ -14,7 +14,7 @@ requires "nim >= 1.4.4"
 requires "plists"
 requires "cligen >= 1.5"
 requires "imageman"
-requires "zopflipng"
+requires "zopflipng >= 0.1.6"
 requires "rcedit"
 requires "zippy"
 requires "http://github.com/bung87/static_server >= 2.2.0"
