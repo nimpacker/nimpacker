@@ -101,6 +101,7 @@ proc buildMacos(wwwroot = "", release = false, flags: seq[string]) =
         documentTypes.add create(DocumentType,
           CFBundleTypeExtensions = some(@[a["ext"].getStr()]),
           CFBundleTypeMIMETypes = some(@[a["mimeType"].getStr()]),
+          LSItemContentTypes = some(@[a["uti"].getStr()]),
           CFBundleTypeRole = some(a["role"].getStr())
         )
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])

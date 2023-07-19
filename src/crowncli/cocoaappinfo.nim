@@ -19,6 +19,7 @@ jsonSchema:
   DocumentType:
     CFBundleTypeExtensions?:string[]
     CFBundleTypeMIMETypes?:string[]
+    LSItemContentTypes?:string[] # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/TP40009249-SW7
     CFBundleTypeRole?:string
   CocoaAppInfo:
     CFBundleDisplayName: string
