@@ -54,7 +54,7 @@ proc baseCmd(base: seq[string], wwwroot: string, release: bool, flags: seq[strin
     result.add fmt" -d:bundle='{zip}'"
   result.add "--threads:on"
   result.add flags
-  let opts = if not release: DEBUG_OPTS else: RELEASE_OPTS
+  let opts = when not defined(release): DEBUG_OPTS else: RELEASE_OPTS
   result.add opts
 
 proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] =
@@ -75,7 +75,7 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     result = ImageInfo(size: size, filePath: optName)
   )
 
-proc buildMacos(wwwroot = "", release = false, flags: seq[string]) =
+proc buildMacos(app_logo: string, wwwroot = "", release = false, flags: seq[string]) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "macos"
@@ -118,7 +118,7 @@ proc buildMacos(wwwroot = "", release = false, flags: seq[string]) =
     CFBundleDocumentTypes = dt
     )
   var plist = appInfo.JsonNode
-  let app_logo = getCurrentDir() / "logo.png"
+
   if fileExists(app_logo):
     let outDir = appDir / "Contents" / "Resources"
     if not dirExists(outDir):
@@ -176,7 +176,7 @@ proc runWindows(wwwroot = "", release = false, flags: seq[string]) =
   else:
     debugEcho output
 
-proc buildWindows(wwwroot = "", release = false, flags: seq[string]) =
+proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[string]) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "windows"
@@ -186,7 +186,6 @@ proc buildWindows(wwwroot = "", release = false, flags: seq[string]) =
   removeDir(buildDir)
   let appDir = buildDir / subDir
   createDir(appDir)
-  let app_logo = getCurrentDir() / "logo.png"
   let logoExists = fileExists(app_logo)
   # var res: string
   # var output: string
@@ -228,13 +227,15 @@ proc buildWindows(wwwroot = "", release = false, flags: seq[string]) =
   else:
     debugEcho o
 
-proc build(target: string, wwwroot = "", release = false, flags: seq[string]): int =
+proc build(target: string, icon = getCurrentDir() / "logo.png", wwwroot = "", release = false, flags: seq[string]): int =
   case target:
     of "macos":
       # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
-      buildMacos(wwwroot, release, flags)
+      buildMacos(icon, wwwroot, release, flags)
     of "windows":
-      buildWindows(wwwroot, release, flags)
+      buildWindows(icon, wwwroot, release, flags)
+    else:
+      discard
 
 proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int =
   case target:
@@ -243,5 +244,7 @@ proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int
       runMacos(wwwroot, release, flags)
     of "windows":
       runWindows(wwwroot, release, flags)
+    else:
+      discard
 
 dispatchMulti([build], [run])
