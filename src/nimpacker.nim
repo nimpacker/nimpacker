@@ -236,8 +236,15 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
     debugEcho o
   result = icoPath
 
+proc postScript(post_build: string, target: string, release: bool) =
+  if post_build.len > 0 and fileExists(post_build):
+    let appDir = getAppDir(target, release)
+    let cmd = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" {post_build}"""
+    let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
+    debugEcho output
+
 proc build(target: string, icon = getCurrentDir() / "logo.png",
-    post_build = getCurrentDir() / "nimpacker/post_build.nims", wwwroot = "",
+    post_build = getCurrentDir() / "nimpacker" / "post_build.nims", wwwroot = "",
     release = false, flags: seq[string]): int =
   case target:
     of "macos":
@@ -248,11 +255,7 @@ proc build(target: string, icon = getCurrentDir() / "logo.png",
     else:
       discard
 
-  if post_build.len > 0 and fileExists(post_build):
-    let appDir = getAppDir(target, release)
-    let cmd = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" {post_build}"""
-    let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
-    debugEcho output
+  postScript(post_build, target, release)
 
 proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int =
   case target:
@@ -276,14 +279,17 @@ proc packWindows(release:bool, icoPath: string) =
   debugEcho output
 
 proc pack(target: string, icon = getCurrentDir() / "logo.png",
-    post_build = getCurrentDir() / "nimpacker/post_build.nims", wwwroot = "",
+    post_build = getCurrentDir() / "nimpacker" / "post_build.nims", wwwroot = "",
     release = false, flags: seq[string]): int =
+
   case target:
     of "macos":
       # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
       buildMacos(icon, wwwroot, release, flags)
+      postScript(post_build, target, release)
     of "windows":
       let icoPath = buildWindows(icon, wwwroot, release, flags)
+      postScript(post_build, target, release)
       packWindows(release, icoPath)
     else:
       discard
