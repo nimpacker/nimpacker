@@ -5,7 +5,7 @@ author        = "bung87"
 description   = "A new awesome nimble package"
 license       = "MIT"
 srcDir        = "src"
-bin           = @["crowncli"]
+bin           = @["nimpacker"]
 
 
 # Dependencies

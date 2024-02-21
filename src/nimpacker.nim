@@ -9,13 +9,13 @@ import strformat
 import icon
 import icon/icns
 import icon/ico
-include crowncli/packageinfo
+include nimpacker/packageinfo
 import imageman/images
 import imageman/colors
 import imageman/resize
 import zopflipng
 import rcedit, options
-include crowncli/cocoaappinfo
+include nimpacker/cocoaappinfo
 import oids
 import std/sha1
 
