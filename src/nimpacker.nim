@@ -24,6 +24,7 @@ type
 
 const DEBUG_OPTS = " --verbose --debug "
 const RELEASE_OPTS = " -d:release -d:noSignalHandler --exceptions:quirky"
+const CACHE_DIR_NAME = ".nimpacker_cache"
 
 proc getPkgInfo(): PackageInfo =
   # let r = execProcess(fmt"nimble",args=["dump", "--json", getCurrentDir()],options={poUsePath})
@@ -123,10 +124,10 @@ proc buildMacos(app_logo: string, wwwroot = "", release = false, flags: seq[stri
     let outDir = appDir / "Contents" / "Resources"
     if not dirExists(outDir):
       createDir(outDir)
-    if not dirExists(getCurrentDir() / ".crowngui_cache"):
-      createDir(getCurrentDir() / ".crowngui_cache")
+    if not dirExists(getCurrentDir() / CACHE_DIR_NAME):
+      createDir(getCurrentDir() / CACHE_DIR_NAME)
     let hash = secureHashFile(app_logo)
-    let cachePath = getCurrentDir() / ".crowngui_cache" / fmt"app.{hash}.icns"
+    let cachePath = getCurrentDir() / CACHE_DIR_NAME / fmt"app.{hash}.icns"
     var path: string
     if fileExists(cachePath):
       path = outDir / "app.icns"
@@ -176,12 +177,19 @@ proc runWindows(wwwroot = "", release = false, flags: seq[string]) =
   else:
     debugEcho output
 
+proc getAppDir(target: string, release: bool): string =
+  let pkgInfo = getPkgInfo()
+  let pwd = getCurrentDir()
+  let buildDir = pwd / "build" / target
+  let subDir = if release: "Release" else: "Debug"
+  result = buildDir / subDir
+  if target == "macos":
+    result = result / pkgInfo.name & ".app"
+
 proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[string]) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "windows"
-  if not dirExists(buildDir):
-    createDir(buildDir)
   let subDir = if release: "Release" else: "Debug"
   removeDir(buildDir)
   let appDir = buildDir / subDir
@@ -227,7 +235,7 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
   else:
     debugEcho o
 
-proc build(target: string, icon = getCurrentDir() / "logo.png", wwwroot = "", release = false, flags: seq[string]): int =
+proc build(target: string, icon = getCurrentDir() / "logo.png", post_build = getCurrentDir() / "nimpacker/post_build.nims", wwwroot = "", release = false, flags: seq[string]): int =
   case target:
     of "macos":
       # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
@@ -236,6 +244,11 @@ proc build(target: string, icon = getCurrentDir() / "logo.png", wwwroot = "", re
       buildWindows(icon, wwwroot, release, flags)
     else:
       discard
+
+  if post_build.len > 0 and fileExists(post_build):
+    let appDir = getAppDir(target, release)
+    let (output, exitCode) = execCmdEx(fmt"nim e -d:APP_DIR={appDir} {post_build}", options = {poUsePath})
+    debugEcho output
 
 proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int =
   case target:
