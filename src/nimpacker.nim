@@ -5,19 +5,21 @@ import zippy/ziparchives
 import icon
 import icon/icns
 import icon/ico
-include nimpacker/packageinfo
+include nimpacker/packageinfo_schema
+import nimpacker/packageinfo
 import imageman/images
 import imageman/colors
 import imageman/resize
 import zopflipng
 import rcedit
 include nimpacker/cocoaappinfo
+import nimpacker/innosetup_script
 
 type
   MyImage = ref Image[ColorRGBAU]
 
 const DEBUG_OPTS = " --verbose --debug "
-const RELEASE_OPTS = " -d:release -d:noSignalHandler --exceptions:quirky"
+const RELEASE_OPTS = " -d:release " # -d:noSignalHandler --exceptions:quirky
 const CACHE_DIR_NAME = ".nimpacker_cache"
 
 proc getPkgInfo(): PackageInfo =
@@ -182,7 +184,7 @@ proc getAppDir(target: string, release: bool): string =
   if target == "macos":
     result = result / pkgInfo.name & ".app"
 
-proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[string]) =
+proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[string]): string {.discardable.} =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "windows"
@@ -232,6 +234,7 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
     moveFile(exePath, appDir / pkgInfo.name & ".exe")
   else:
     debugEcho o
+  result = icoPath
 
 proc build(target: string, icon = getCurrentDir() / "logo.png",
     post_build = getCurrentDir() / "nimpacker/post_build.nims", wwwroot = "",
@@ -247,8 +250,8 @@ proc build(target: string, icon = getCurrentDir() / "logo.png",
 
   if post_build.len > 0 and fileExists(post_build):
     let appDir = getAppDir(target, release)
-    let (output, exitCode) = execCmdEx(fmt"nim e -d:APP_DIR={appDir} {post_build}",
-        options = {poUsePath})
+    let cmd = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" {post_build}"""
+    let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
     debugEcho output
 
 proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int =
@@ -261,4 +264,28 @@ proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int
     else:
       discard
 
-dispatchMulti([build], [run])
+proc packWindows(release:bool, icoPath: string) =
+  let pkgInfo = getPkgInfo()
+  let appDir = getAppDir("windows", release)
+  let script = getInnoSetupScript(pkgInfo, appDir, icoPath)
+  let tempDir = getTempDir()
+  let issPath = tempDir / pkgInfo.name & ".iss"
+  writeFile(issPath, script)
+  let cmd = "ISCC.exe " & issPath
+  let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
+  debugEcho output
+
+proc pack(target: string, icon = getCurrentDir() / "logo.png",
+    post_build = getCurrentDir() / "nimpacker/post_build.nims", wwwroot = "",
+    release = false, flags: seq[string]): int =
+  case target:
+    of "macos":
+      # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
+      buildMacos(icon, wwwroot, release, flags)
+    of "windows":
+      let icoPath = buildWindows(icon, wwwroot, release, flags)
+      packWindows(release, icoPath)
+    else:
+      discard
+
+dispatchMulti([build], [run], [pack])
