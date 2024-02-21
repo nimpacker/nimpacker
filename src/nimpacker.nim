@@ -227,7 +227,8 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
   if e == 0:
     debugEcho o
     let exePath = pwd / pkgInfo.name & ".exe"
-    rcedit(none(string), exePath, {"icon": icoPath}.toTable())
+    if icoPath.len > 0 and fileExists(icoPath):
+      rcedit(none(string), exePath, {"icon": icoPath}.toTable())
     moveFile(exePath, appDir / pkgInfo.name & ".exe")
   else:
     debugEcho o
