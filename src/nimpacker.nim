@@ -1,11 +1,7 @@
-import cligen, os
-import json
+import std/[os, json, tables, osproc, sequtils, strformat, oids, sha1, options]
+import cligen
 import plists
-import tables
-import osproc
-import sequtils
 import zippy/ziparchives
-import strformat
 import icon
 import icon/icns
 import icon/ico
@@ -14,10 +10,8 @@ import imageman/images
 import imageman/colors
 import imageman/resize
 import zopflipng
-import rcedit, options
+import rcedit
 include nimpacker/cocoaappinfo
-import oids
-import std/sha1
 
 type
   MyImage = ref Image[ColorRGBAU]
@@ -48,7 +42,8 @@ proc handleBundle(wwwroot: string): string =
     debugEcho zip
   return zip
 
-proc baseCmd(base: seq[string], wwwroot: string, release: bool, flags: seq[string]): seq[string] =
+proc baseCmd(base: seq[string], wwwroot: string, release: bool, flags: seq[
+    string]): seq[string] =
   result = base
   let zip = handleBundle(wwwroot)
   if len(wwwroot) > 0:
@@ -67,7 +62,8 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     let img = cast[MyImage](png)
     let img2 = img[].resizedBicubic(size, size)
     let ad = cast[ptr UnCheckedArray[byte]](img2.data[0].unsafeAddr)
-    discard zopflipng.savePNG32(tmpName, toOpenArray(ad, 0, img2.data.len * 4 - 1), img2.width, img2.height)
+    discard zopflipng.savePNG32(tmpName, toOpenArray(ad, 0, img2.data.len * 4 -
+        1), img2.width, img2.height)
     try:
       optimizePNG(tmpName, optName)
     except Exception as e:
@@ -139,8 +135,8 @@ proc buildMacos(app_logo: string, wwwroot = "", release = false, flags: seq[stri
       copyFile(path, cachePath)
       discard images.mapIt(tryRemoveFile(it.filePath))
     plist["CFBundleIconFile"] = newJString(extractFilename path)
-  if not dirExists(appDir / "Contents" ):
-    createDir(appDir / "Contents" )
+  if not dirExists(appDir / "Contents"):
+    createDir(appDir / "Contents")
   writePlist(plist, appDir / "Contents" / "Info.plist")
   var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release, flags)
   let finalCMD = cmd.join(" ")
@@ -215,7 +211,8 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
   var myflags: seq[string]
   when not defined(windows):
     myflags.add "-d:mingw"
-  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release, myflags.concat flags)
+  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release,
+      myflags.concat flags)
   # for windres
   # if logoExists and exitCode == 0:
   #   discard cmd.concat @[&"--passL:{res}"]
@@ -235,7 +232,9 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
   else:
     debugEcho o
 
-proc build(target: string, icon = getCurrentDir() / "logo.png", post_build = getCurrentDir() / "nimpacker/post_build.nims", wwwroot = "", release = false, flags: seq[string]): int =
+proc build(target: string, icon = getCurrentDir() / "logo.png",
+    post_build = getCurrentDir() / "nimpacker/post_build.nims", wwwroot = "",
+    release = false, flags: seq[string]): int =
   case target:
     of "macos":
       # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
@@ -247,7 +246,8 @@ proc build(target: string, icon = getCurrentDir() / "logo.png", post_build = get
 
   if post_build.len > 0 and fileExists(post_build):
     let appDir = getAppDir(target, release)
-    let (output, exitCode) = execCmdEx(fmt"nim e -d:APP_DIR={appDir} {post_build}", options = {poUsePath})
+    let (output, exitCode) = execCmdEx(fmt"nim e -d:APP_DIR={appDir} {post_build}",
+        options = {poUsePath})
     debugEcho output
 
 proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int =
