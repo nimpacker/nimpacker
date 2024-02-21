@@ -12,7 +12,7 @@ bin           = @["nimpacker"]
 
 requires "nim >= 1.4.4"
 requires "plists"
-requires "cligen >= 1.5"
+requires "cligen >= 1.6"
 requires "imageman"
 requires "zopflipng >= 0.1.6"
 requires "rcedit"
