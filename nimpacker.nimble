@@ -27,3 +27,8 @@ when NimMajor >= 2:
 
 if detectOs(Windows):
   foreignDep "InnoSetup"
+elif detectOs(Debian) or detectOs(Ubuntu) or
+  detectOs(Kali) or detectOs(Elementary) or detectOs(Zorin) or
+  detectOs(MXLinux) or detectOs(Deepin) or detectOs(Parrot) or
+  detectOs(Trisquel):
+  foreignDep "dpkg"

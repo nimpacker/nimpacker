@@ -2,7 +2,10 @@ import std/[os, strformat, strutils]
 import ./packageinfo
 import parseini
 
+# dpkg-shlibdeps -e ../src/initium -O
+
 proc getControl*(pkgInfo: PackageInfo, depends: string): string =
+  let size = 0 #kb
   let arch = hostCPU
   result = fmt"""
   Package: {pkgInfo.name}
@@ -10,6 +13,7 @@ proc getControl*(pkgInfo: PackageInfo, depends: string): string =
   Description: {pkgInfo.desc}
   Architecture: {arch}
   Maintainer: YOUR NAME <EMAIL>
+  Installed-Size: {size}
   Depends: {depends}
   """.unindent
 
