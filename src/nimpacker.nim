@@ -1,4 +1,4 @@
-import std/[os, json, tables, osproc, sequtils, strformat, oids, sha1, options]
+import std/[os, json, tables, osproc, sequtils, strformat, oids, sha1, options, distros]
 import cligen
 import plists
 import zippy/ziparchives
@@ -274,6 +274,10 @@ proc packWindows(release:bool, icoPath: string) =
   let tempDir = getTempDir()
   let issPath = tempDir / pkgInfo.name & ".iss"
   writeFile(issPath, script)
+  let isccPath = findExe("ISCC")
+  let (installCmd, sudo) = foreignDepInstallCmd("InnoSetup")
+  if isccPath.len == 0:
+    quit("ISCC.exe not found, please ensure it's in `Path` environment variable or install it via `" & installCmd & "`")
   let cmd = "ISCC.exe " & issPath
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
   debugEcho output
