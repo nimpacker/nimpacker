@@ -1,3 +1,5 @@
+import os, std/distros
+
 # Package
 
 version       = "0.1.5"
@@ -20,3 +22,6 @@ requires "zippy"
 requires "icon >= 0.2.0"
 requires "jsonschema"
 requires "parseini"
+
+if detectOs(Windows):
+  foreignDep "InnoSetup"
