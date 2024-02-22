@@ -14,6 +14,7 @@ import zopflipng
 import rcedit
 include nimpacker/cocoaappinfo
 import nimpacker/innosetup_script
+import nimpacker/linux
 
 when NimMajor >= 2:
   import checksums/md5
@@ -57,7 +58,7 @@ proc baseCmd(base: seq[string], wwwroot: string, release: bool, flags: seq[
     result.add fmt" -d:bundle='{zip}'"
   result.add "--threads:on"
   result.add flags
-  let opts = when not defined(release): DEBUG_OPTS else: RELEASE_OPTS
+  let opts = if not release: DEBUG_OPTS else: RELEASE_OPTS
   result.add opts
 
 proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] =
@@ -241,6 +242,50 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
     debugEcho o
   result = icoPath
 
+proc buildLinux(app_logo: string, wwwroot = "", release = false, flags: seq[string]) =
+  let pwd: string = getCurrentDir()
+  let pkgInfo = getPkgInfo()
+  let buildDir = pwd / "build" / "linux"
+  let subDir = if release: "Release" else: "Debug"
+  removeDir(buildDir)
+  let appDir = buildDir / subDir
+  createDir(appDir)
+  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release, flags)
+  let finalCMD = cmd.join(" ")
+  debugEcho finalCMD
+  let (o, e) = execCmdEx(finalCMD)
+  if e == 0:
+    debugEcho o
+    let exePath = pwd / pkgInfo.name
+    moveFile(exePath, appDir / pkgInfo.name)
+  else:
+    debugEcho o
+
+proc packLinux(release:bool, icon: string) =
+  let pkgInfo = getPkgInfo()
+  let appDir = getAppDir("linux", release)
+  createDebianTree(appDir)
+  moveFile(appDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
+  copyFile(icon, appDir / "usr" / "share" / "icons" / pkgInfo.name & ".png")
+  let desktop = getDesktop(pkgInfo)
+  let desktopPath = appDir / "usr" / "share" / "applications" / pkgInfo.name & ".desktop"
+  writeFile(desktopPath, desktop)
+  let exes = findExes(appDir)
+  let baseControl = getControlBasic(pkgInfo)
+  writeFile(appDir / "debian" / "control", baseControl)
+  let oldPWD = getCurrentDir()
+  setCurrentDir(appDir)
+  let deps = collectDeps(exes)
+  setCurrentDir(oldPWD)
+  let size = getDirectorySize(appDir)
+  let sizeInKb = size div 1024
+  let controlContent = getControl(pkgInfo, deps, sizeInKb)
+  writeFile(appDir / "debian" / "control", controlContent)
+  let cmd = fmt"dpkg-deb --build {appDir} dist"
+  let (output, exitCode) = execCmdEx(cmd)
+  debugEcho output
+  quit(exitCode)
+
 proc postScript(post_build: string, target: string, release: bool) =
   if post_build.len > 0 and fileExists(post_build):
     let appDir = getAppDir(target, release)
@@ -300,6 +345,12 @@ proc pack(target: string, icon = getCurrentDir() / "logo.png",
       let icoPath = buildWindows(icon, wwwroot, release, flags)
       postScript(post_build, target, release)
       packWindows(release, icoPath)
+    of "linux":
+      buildLinux(icon, wwwroot, release, flags)
+      let appDir = getAppDir("linux", release)
+      createDir(appDir / "usr" / "bin")
+      postScript(post_build, target, release)
+      packLinux(release, icon)
     else:
       discard
 
