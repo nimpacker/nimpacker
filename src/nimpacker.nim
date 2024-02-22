@@ -1,4 +1,4 @@
-import std/[os, json, tables, osproc, sequtils, strformat, oids, sha1, options, distros]
+import std/[os, json, tables, osproc, sequtils, strformat, oids, options, distros]
 import cligen
 import plists
 import zippy/ziparchives
@@ -14,6 +14,11 @@ import zopflipng
 import rcedit
 include nimpacker/cocoaappinfo
 import nimpacker/innosetup_script
+
+when NimMajor >= 2:
+  import checksums/md5
+else:
+  import std/md5
 
 type
   MyImage = ref Image[ColorRGBAU]
@@ -124,7 +129,7 @@ proc buildMacos(app_logo: string, wwwroot = "", release = false, flags: seq[stri
       createDir(outDir)
     if not dirExists(getCurrentDir() / CACHE_DIR_NAME):
       createDir(getCurrentDir() / CACHE_DIR_NAME)
-    let hash = secureHashFile(app_logo)
+    let hash = getMD5(readFile(app_logo))
     let cachePath = getCurrentDir() / CACHE_DIR_NAME / fmt"app.{hash}.icns"
     var path: string
     if fileExists(cachePath):

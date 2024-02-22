@@ -22,6 +22,8 @@ requires "zippy"
 requires "icon >= 0.2.0"
 requires "jsonschema"
 requires "parseini"
+when NimMajor >= 2:
+  requires "checksums"
 
 if detectOs(Windows):
   foreignDep "InnoSetup"
