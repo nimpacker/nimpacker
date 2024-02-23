@@ -43,8 +43,8 @@ proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string): st
     Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
     [Files]
-    Source: "$1\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
-
+    Source: "$1\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+    ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
     [Icons]
     Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
     Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon

@@ -1,4 +1,4 @@
-import std/[os, json, tables, osproc, sequtils, strformat, oids, options, distros]
+import std/[os, json, tables, osproc, strutils, sequtils, strformat, oids, options, distros]
 import cligen
 import plists
 import zippy/ziparchives
@@ -342,9 +342,11 @@ proc packWindows(release:bool, icoPath: string) =
   let (installCmd, sudo) = foreignDepInstallCmd("InnoSetup")
   if isccPath.len == 0:
     quit("ISCC.exe not found, please ensure it's in `Path` environment variable or install it via `" & installCmd & "`")
-  let cmd = "ISCC.exe " & issPath
+  let cmd = "ISCC.exe /V1 " & issPath
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
-  debugEcho output
+  for line in output.splitLines():
+    if not line.startsWith("Parsing"):
+      debugEcho line
 
 proc pack(target: string, icon = "logo.png",
     post_build =  "nimpacker" / "post_build.nims", wwwroot = "",
