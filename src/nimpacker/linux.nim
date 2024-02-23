@@ -6,8 +6,15 @@ proc isExecutable(path: string): bool =
   let p = getFilePermissions(path)
   result = fpUserExec in p and fpGroupExec in p and fpOthersExec in p
 
+proc isBinaryProgram(fileName: string): bool =
+  var file = open(fileName, fmRead)
+  var magicNumber: array[4, uint8]
+  discard file.readBytes(magicNumber, 0,  4)
+  file.close()
+  return magicNumber == [127.uint8, 'E'.ord.uint8, 'L'.ord.uint8, 'F'.ord.uint8]
+
 proc findExes*(baseDir: string): seq[string] =
-  toSeq(walkDirRec(baseDir)).filterIt(it.isExecutable)
+  toSeq(walkDirRec(baseDir)).filterIt(it.isBinaryProgram)
 
 proc collectDeps*(exes:seq[string]): string =
   var outputs = newSeq[string]()
