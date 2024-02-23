@@ -2,7 +2,7 @@ import std/[os, strformat, strutils]
 import ./packageinfo
 import parseini
 
-proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string): string =
+proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string, appId: string): string =
   let defines = fmt"""
     #define MyAppName "{pkgInfo.name}"
     #define MyAppVersion "{pkgInfo.version}"
@@ -13,7 +13,6 @@ proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string): st
 
   var dict = newConfig()
   # dict.setSectionKey("","charset", "utf-8")
-  let appId = "9c22b875-dc26-44a2-945e-4661daaf6b07"
   dict.setSectionKey("Setup", "AppId", "{{" & appId & "}", false)
   dict.setSectionKey("Setup", "OutputDir", getCurrentDir() / "dist", false)
   # dict.setSectionKey("Package", "--threads", "on")

@@ -334,7 +334,10 @@ proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int
 proc packWindows(release:bool, icoPath: string) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("windows", release)
-  let script = getInnoSetupScript(pkgInfo, appDir, icoPath)
+  if not fileExists("APPID.txt"):
+    quit("APPID.txt not found, The file contains GUID used in Inno Setup to uniquely identify an application during the installation process.")
+  let appId = readFile("APPID.txt").strip()
+  let script = getInnoSetupScript(pkgInfo, appDir, icoPath, appId)
   let tempDir = getTempDir()
   let issPath = tempDir / pkgInfo.name & ".iss"
   writeFile(issPath, script)
@@ -344,9 +347,14 @@ proc packWindows(release:bool, icoPath: string) =
     quit("ISCC.exe not found, please ensure it's in `Path` environment variable or install it via `" & installCmd & "`")
   let cmd = "ISCC.exe /V1 " & issPath
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
+  var found = false
   for line in output.splitLines():
-    if not line.startsWith("Parsing"):
+    if not found and line.startsWith("Compiler engine version"):
+      found = true
+    if found == true and not line.startsWith("Parsing"):
       debugEcho line
+  if not found:
+    debugEcho output
 
 proc pack(target: string, icon = "logo.png",
     post_build =  "nimpacker" / "post_build.nims", wwwroot = "",
