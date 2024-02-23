@@ -56,7 +56,6 @@ proc baseCmd(base: seq[string], wwwroot: string, release: bool, flags: seq[
   let zip = handleBundle(wwwroot)
   if len(wwwroot) > 0:
     result.add fmt" -d:bundle='{zip}'"
-  result.add "--threads:on"
   result.add flags
   let opts = if not release: DEBUG_OPTS else: RELEASE_OPTS
   result.add opts
