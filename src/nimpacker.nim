@@ -14,7 +14,7 @@ import zopflipng
 import rcedit
 include nimpacker/cocoaappinfo
 import nimpacker/innosetup_script
-import nimpacker/[linux, macos]
+import nimpacker/[linux, macos,appimage]
 
 when NimMajor >= 2:
   import checksums/md5
@@ -206,8 +206,8 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "windows"
   let subDir = if release: "Release" else: "Debug"
-  removeDir(buildDir)
   let appDir = buildDir / subDir
+  removeDir(buildDir)
   createDir(appDir)
   let logoExists = fileExists(app_logo)
   # var res: string
@@ -270,7 +270,29 @@ proc buildLinux(app_logo: string, wwwroot = "", release = false, flags: seq[stri
     let exePath = pwd / pkgInfo.name
     moveFile(exePath, appDir / pkgInfo.name)
   else:
-    debugEcho o
+    quit o
+
+proc packAppImage(release = false, app_logo: string) =
+  let pwd: string = getCurrentDir()
+  let pkgInfo = getPkgInfo()
+  let buildDir = pwd / "build" / "linux"
+  let subDir = if release: "Release" else: "Debug"
+  let appDir = buildDir / subDir / pkgInfo.name & ".AppDir"
+  removeDir(appDir)
+  createDir(appDir)
+  createAppImageTree(appDir)
+  moveFile(buildDir / subDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
+  let logoExists = fileExists(app_logo)
+  copyFile(app_logo, appDir / pkgInfo.name & ".png")
+  let desktop = getDesktop(pkgInfo,"appimage")
+  let desktopPath = appDir / pkgInfo.name & ".desktop"
+  writeFile(desktopPath, desktop)
+  let run = getAppRun(pkgInfo)
+  writeFile(appDir / "AppRun", run)
+  let cmd = fmt"appimagetool {appDir} --output-file dist/{pkgInfo.name}.AppImage"
+  let (output, exitCode) = execCmdEx(cmd)
+  debugEcho output
+  quit(exitCode)
 
 proc packLinux(release:bool, icon: string) =
   let pkgInfo = getPkgInfo()
@@ -360,13 +382,13 @@ proc packMacos(release:bool) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("macos", release)
   let cmd = getCreateDmg(pkgInfo, appDir)
-  echo cmd
+  debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
   debugEcho output
 
 proc pack(target: string, icon = "logo.png",
     post_build =  "nimpacker" / "post_build.nims", wwwroot = "",
-    release = false, flags: seq[string]): int =
+    release = false, format = "", flags: seq[string]): int =
 
   case target:
     of "macos":
@@ -378,11 +400,21 @@ proc pack(target: string, icon = "logo.png",
       postScript(post_build, target, release)
       packWindows(release, icoPath)
     of "linux":
-      buildLinux(icon, wwwroot, release, flags)
-      let appDir = getAppDir("linux", release)
-      createDir(appDir / "usr" / "bin")
-      postScript(post_build, target, release)
-      packLinux(release, icon)
+      if format == "":
+        buildLinux(icon, wwwroot, release, flags)
+        let appDir = getAppDir("linux", release)
+        createDir(appDir / "usr" / "bin")
+        createDir(appDir / "usr" / "lib")
+        postScript(post_build, target, release)
+        packLinux(release, icon)
+      elif format == "appimage":
+        buildLinux(icon, wwwroot, release, flags)
+        let baseDir = getAppDir("linux", release)
+        let pkgInfo = getPkgInfo()
+        let appDir = baseDir / pkgInfo.name & ".AppDir"
+        createAppImageTree(appDir)
+        postScript(post_build, target, release)
+        packAppImage(release, icon)
     else:
       discard
 
