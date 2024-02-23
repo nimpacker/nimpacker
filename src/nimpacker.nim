@@ -14,7 +14,7 @@ import zopflipng
 import rcedit
 include nimpacker/cocoaappinfo
 import nimpacker/innosetup_script
-import nimpacker/linux
+import nimpacker/[linux, macos]
 
 when NimMajor >= 2:
   import checksums/md5
@@ -356,6 +356,14 @@ proc packWindows(release:bool, icoPath: string) =
   if not found:
     debugEcho output
 
+proc packMacos(release:bool) =
+  let pkgInfo = getPkgInfo()
+  let appDir = getAppDir("macos", release)
+  let cmd = getCreateDmg(pkgInfo, appDir)
+  echo cmd
+  let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
+  debugEcho output
+
 proc pack(target: string, icon = "logo.png",
     post_build =  "nimpacker" / "post_build.nims", wwwroot = "",
     release = false, flags: seq[string]): int =
@@ -364,6 +372,7 @@ proc pack(target: string, icon = "logo.png",
     of "macos":
       buildMacos(icon, wwwroot, release, flags)
       postScript(post_build, target, release)
+      packMacos(release)
     of "windows":
       let icoPath = buildWindows(icon, wwwroot, release, flags)
       postScript(post_build, target, release)
