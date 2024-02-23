@@ -75,7 +75,8 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     try:
       optimizePNG(tmpName, optName)
     except Exception as e:
-      stderr.write(e.msg & "\n")
+      if e.msg != "not enough input to encode":
+        stderr.write(e.msg & "\n")
       return ImageInfo(size: size, filePath: tmpName)
     result = ImageInfo(size: size, filePath: optName)
   )
