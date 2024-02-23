@@ -48,11 +48,20 @@ example directory structure.
 │   │           └── share
 │   │               ├── applications
 │   │               │   └── package_name.desktop
-│   │               ├── icons
-│   │               │   └── package_name.png
-│   └── windows
+│   │               └── icons
+│   │                   └── package_name.png
+│   ├── windows
+│   │   └── Release
+│   │       └── package_name.exe
+│   └── macos
 │       └── Release
-│           └── package_name.exe
+│           └── package_name.app
+│               └── Contents
+│                   ├── Info.plist
+│                   ├── MacOS
+│                   │   └── package_name
+│                   └── Resources
+│                       └── app.icns
 ├── dist
 ├── package_name.nimble
 ├── nimpacker
