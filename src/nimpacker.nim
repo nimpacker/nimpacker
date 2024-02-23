@@ -181,6 +181,17 @@ proc runWindows(wwwroot = "", release = false, flags: seq[string]) =
   else:
     debugEcho output
 
+proc runLinux(wwwroot = "", release = false, flags: seq[string]) =
+  let pkgInfo = getPkgInfo()
+  var cmd = baseCmd(@["nimble"], wwwroot, release, flags)
+  let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
+  debugEcho finalCMD
+  let (output, exitCode) = execCmdEx(finalCMD)
+  if exitCode == 0:
+    debugEcho output
+  else:
+    debugEcho output
+
 proc getAppDir(target: string, release: bool): string =
   let pkgInfo = getPkgInfo()
   let pwd = getCurrentDir()
@@ -293,8 +304,8 @@ proc postScript(post_build: string, target: string, release: bool) =
     let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
     debugEcho output
 
-proc build(target: string, icon = getCurrentDir() / "logo.png",
-    post_build = getCurrentDir() / "nimpacker" / "post_build.nims", wwwroot = "",
+proc build(target: string, icon = "logo.png",
+    post_build = "nimpacker" / "post_build.nims", wwwroot = "",
     release = false, flags: seq[string]): int =
   case target:
     of "macos":
@@ -302,6 +313,8 @@ proc build(target: string, icon = getCurrentDir() / "logo.png",
       buildMacos(icon, wwwroot, release, flags)
     of "windows":
       buildWindows(icon, wwwroot, release, flags)
+    of "linux":
+      buildLinux(icon, wwwroot, release, flags)
     else:
       discard
 
@@ -310,10 +323,11 @@ proc build(target: string, icon = getCurrentDir() / "logo.png",
 proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int =
   case target:
     of "macos":
-      # nim c -r -f src/crownguipkg/cli.nim run --target macos --wwwroot ./docs
       runMacos(wwwroot, release, flags)
     of "windows":
       runWindows(wwwroot, release, flags)
+    of "linux":
+      runLinux(wwwroot, release, flags)
     else:
       discard
 
@@ -332,13 +346,12 @@ proc packWindows(release:bool, icoPath: string) =
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
   debugEcho output
 
-proc pack(target: string, icon = getCurrentDir() / "logo.png",
-    post_build = getCurrentDir() / "nimpacker" / "post_build.nims", wwwroot = "",
+proc pack(target: string, icon = "logo.png",
+    post_build =  "nimpacker" / "post_build.nims", wwwroot = "",
     release = false, flags: seq[string]): int =
 
   case target:
     of "macos":
-      # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
       buildMacos(icon, wwwroot, release, flags)
       postScript(post_build, target, release)
     of "windows":
