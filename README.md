@@ -34,9 +34,9 @@ example directory structure.
 
 ``` sh
 .
-├── APPID.txt
+├── APPID.txt (Recommend for best practice)
 ├── .nimpacker_cache/
-├── VERSION.txt
+├── VERSION.txt (Recommend for best practice)
 ├── build
 │   ├── linux
 │   │   └── Release
@@ -65,15 +65,18 @@ example directory structure.
 ├── dist
 ├── package_name.nimble
 ├── nimpacker
-│   └── post_build.nims
+│   ├── post_build.nims
+│   └── meta.nims
 
 ```
 
-`.nimpacker_cache/` is cache direcotry for nimpack
+`.nimpacker_cache/` is cache direcotry for nimpacker.
 
 `nimpacker/post_build.nims` is nimscript executed after build.
 
-example `post_build.nims`
+`nimpacker/meta.nims` is variables defined for app meta info.
+
+example `nimpacker/post_build.nims`
 
 ```nim
 #!/usr/bin/env nim
@@ -102,3 +105,14 @@ elif defined(linux):
 ```
 
 `APP_DIR` is defined via `nimpacker`
+
+example `nimpacker/meta.nims`
+
+```nim
+import os
+
+productName = "NimPacker"
+
+# a GUID required by InnoSetup
+appId = staticRead(getCurrentDir() / "APPID.txt")
+```
