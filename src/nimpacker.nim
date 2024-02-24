@@ -361,10 +361,9 @@ proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int
     else:
       discard
 
-proc packWindows(release:bool, icoPath: string) =
+proc packWindows(release:bool, icoPath: string, metaInfo: MetaInfo) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("windows", release)
-  let metaInfo = getMetaInfo()
   let appId = metaInfo.appId
   if appId.len == 0:
     quit(fmt"Variable `appId` in {DefaultMetaPath} SHOULD NOT be empty, The `appId` is a GUID used in Inno Setup to uniquely identify an application during the installation process.")
@@ -407,7 +406,7 @@ proc pack(target: string, icon = "logo.png",
     of "windows":
       let icoPath = buildWindows(icon, wwwroot, release, flags)
       postScript(post_build, target, release)
-      packWindows(release, icoPath)
+      packWindows(release, icoPath, metaInfo)
     of "linux":
       if format == "":
         buildLinux(icon, wwwroot, release, flags)
