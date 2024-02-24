@@ -4,3 +4,7 @@ type PackageInfo* = object
   author*: string
   desc*: string
   license*: string
+
+type MetaInfo * = object
+  productName*: string
+  appId*: string

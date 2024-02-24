@@ -1,8 +1,12 @@
 import std/[os, strformat]
 import ./packageinfo
 
-proc getCreateDmg*(pkgInfo: PackageInfo, appDir: string):string =
-  let name = pkgInfo.name
+proc getCreateDmg*(pkgInfo: PackageInfo, metaInfo: MetaInfo, appDir: string):string =
+  let productName = metaInfo.productName
+  let name = if productName.len > 0: productName else: pkgInfo.name
+  let outputPath = fmt"dist/{name}-Installer.dmg"
+  if fileExists(outputPath):
+    removeFile(outputPath)
   result = fmt"""
   create-dmg \
   --volname "{name} Installer" \
@@ -13,6 +17,6 @@ proc getCreateDmg*(pkgInfo: PackageInfo, appDir: string):string =
   --icon "{appDir.lastPathPart}" 200 190 \
   --hide-extension "{appDir.lastPathPart}" \
   --app-drop-link 600 185 \
-  "dist/{name}-Installer.dmg" \
+  "{outputPath}" \
   "{appDir}"
   """

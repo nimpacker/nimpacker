@@ -75,9 +75,11 @@ proc createDebianTree*(baseDir: string) =
   # /usr/share/icons/{pkgInfo.name}.png
   # dpkg-deb --build
 
-proc getDesktop*(pkgInfo: PackageInfo, format = ""): string =
+proc getDesktop*(pkgInfo: PackageInfo, metaInfo: MetaInfo, format = ""): string =
+  let productName = metaInfo.productName
+  let name = if productName.len > 0: productName else: pkgInfo.name
   var dict = newConfig()
-  dict.setSectionKey("Desktop Entry", "Name", pkgInfo.name, false)
+  dict.setSectionKey("Desktop Entry", "Name", name, false)
   dict.setSectionKey("Desktop Entry", "Comment", pkgInfo.desc, false)
   dict.setSectionKey("Desktop Entry", "Exec", pkgInfo.name , false)
   let icon = if format == "appimage": pkgInfo.name else: fmt"/usr/share/icons/{pkgInfo.name}.png"

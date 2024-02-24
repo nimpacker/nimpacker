@@ -5,16 +5,15 @@ import zippy/ziparchives
 import icon
 import icon/icns
 import icon/ico
-include nimpacker/packageinfo_schema
-import nimpacker/packageinfo
 import imageman/images
 import imageman/colors
 import imageman/resize
 import zopflipng
 import rcedit
+include nimpacker/packageinfo_schema
 include nimpacker/cocoaappinfo
-import nimpacker/innosetup_script
-import nimpacker/[linux, macos,appimage]
+import nimpacker/[packageinfo, read_meta]
+import nimpacker/[innosetup_script, linux, macos, appimage]
 
 when NimMajor >= 2:
   import checksums/md5
@@ -80,7 +79,7 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     result = ImageInfo(size: size, filePath: optName)
   )
 
-proc buildMacos(app_logo: string, wwwroot = "", release = false, flags: seq[string]) =
+proc buildMacos(app_logo: string, wwwroot = "", release = false, metaInfo: MetaInfo = default(MetaInfo), flags: seq[string]) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "macos"
@@ -109,13 +108,16 @@ proc buildMacos(app_logo: string, wwwroot = "", release = false, flags: seq[stri
           LSItemContentTypes = some(@[a["uti"].getStr()]),
           CFBundleTypeRole = some(a["role"].getStr())
         )
+  let productName = metaInfo.productName
+  let displayName = if productName.len > 0: productName else: pkgInfo.name 
+
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
   let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
   let appInfo = create(CocoaAppInfo,
     NSHighResolutionCapable = some(true),
     CFBundlePackageType = some("APPL"),
     CFBundleExecutable = pkgInfo.name,
-    CFBundleDisplayName = pkgInfo.name,
+    CFBundleDisplayName = displayName,
     CFBundleVersion = pkgInfo.version,
     CFBundleIdentifier = none(string),
     NSAppTransportSecurity = sec,
@@ -272,7 +274,7 @@ proc buildLinux(app_logo: string, wwwroot = "", release = false, flags: seq[stri
   else:
     quit o
 
-proc packAppImage(release = false, app_logo: string) =
+proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "linux"
@@ -284,7 +286,8 @@ proc packAppImage(release = false, app_logo: string) =
   moveFile(buildDir / subDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
   let logoExists = fileExists(app_logo)
   copyFile(app_logo, appDir / pkgInfo.name & ".png")
-  let desktop = getDesktop(pkgInfo,"appimage")
+  let metaInfo = getMetaInfo()
+  let desktop = getDesktop(pkgInfo, metaInfo,"appimage")
   let desktopPath = appDir / pkgInfo.name & ".desktop"
   writeFile(desktopPath, desktop)
   let run = getAppRun(pkgInfo)
@@ -303,7 +306,8 @@ proc packLinux(release:bool, icon: string) =
   createDebianTree(appDir)
   moveFile(appDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
   copyFile(icon, appDir / "usr" / "share" / "icons" / pkgInfo.name & ".png")
-  let desktop = getDesktop(pkgInfo)
+  let metaInfo = getMetaInfo()
+  let desktop = getDesktop(pkgInfo, metaInfo)
   let desktopPath = appDir / "usr" / "share" / "applications" / pkgInfo.name & ".desktop"
   writeFile(desktopPath, desktop)
   let exes = findExes(appDir)
@@ -332,10 +336,11 @@ proc postScript(post_build: string, target: string, release: bool) =
 proc build(target: string, icon = "logo.png",
     post_build = "nimpacker" / "post_build.nims", wwwroot = "",
     release = false, flags: seq[string]): int =
+  let metaInfo = getMetaInfo()
   case target:
     of "macos":
       # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
-      buildMacos(icon, wwwroot, release, flags)
+      buildMacos(icon, wwwroot, release, metaInfo, flags)
     of "windows":
       buildWindows(icon, wwwroot, release, flags)
     of "linux":
@@ -359,10 +364,11 @@ proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int
 proc packWindows(release:bool, icoPath: string) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("windows", release)
-  if not fileExists("APPID.txt"):
-    quit("APPID.txt not found, The file contains GUID used in Inno Setup to uniquely identify an application during the installation process.")
-  let appId = readFile("APPID.txt").strip()
-  let script = getInnoSetupScript(pkgInfo, appDir, icoPath, appId)
+  let metaInfo = getMetaInfo()
+  let appId = metaInfo.appId
+  if appId.len == 0:
+    quit(fmt"Variable `appId` in {DefaultMetaPath} SHOULD NOT be empty, The `appId` is a GUID used in Inno Setup to uniquely identify an application during the installation process.")
+  let script = getInnoSetupScript(pkgInfo, appDir, icoPath, metaInfo)
   let tempDir = getTempDir()
   let issPath = tempDir / pkgInfo.name & ".iss"
   writeFile(issPath, script)
@@ -381,10 +387,10 @@ proc packWindows(release:bool, icoPath: string) =
   if not found:
     debugEcho output
 
-proc packMacos(release:bool) =
+proc packMacos(release:bool, metaInfo: MetaInfo) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("macos", release)
-  let cmd = getCreateDmg(pkgInfo, appDir)
+  let cmd = getCreateDmg(pkgInfo, metaInfo, appDir)
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
   debugEcho output
@@ -392,12 +398,12 @@ proc packMacos(release:bool) =
 proc pack(target: string, icon = "logo.png",
     post_build =  "nimpacker" / "post_build.nims", wwwroot = "",
     release = false, format = "", flags: seq[string]): int =
-
+  let metaInfo = getMetaInfo()
   case target:
     of "macos":
-      buildMacos(icon, wwwroot, release, flags)
+      buildMacos(icon, wwwroot, release, metaInfo, flags)
       postScript(post_build, target, release)
-      packMacos(release)
+      packMacos(release, metaInfo)
     of "windows":
       let icoPath = buildWindows(icon, wwwroot, release, flags)
       postScript(post_build, target, release)
@@ -417,7 +423,7 @@ proc pack(target: string, icon = "logo.png",
         let appDir = baseDir / pkgInfo.name & ".AppDir"
         createAppImageTree(appDir)
         postScript(post_build, target, release)
-        packAppImage(release, icon)
+        packAppImage(release, icon, metaInfo)
     else:
       discard
 
