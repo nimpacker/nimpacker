@@ -19,6 +19,7 @@ proc createAppImageTree*(baseDir: string) =
   ## https://docs.appimage.org/reference/appdir.html#root-icon
   createDir(baseDir / "usr" / "bin")
   createDir(baseDir / "usr" / "lib")
+  createDir(baseDir / "usr" / "lib64")
 
 proc getAppRun*(pkgInfo: PackageInfo): string =
   result = fmt"""

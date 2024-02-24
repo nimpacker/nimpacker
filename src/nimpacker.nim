@@ -289,6 +289,9 @@ proc packAppImage(release = false, app_logo: string) =
   writeFile(desktopPath, desktop)
   let run = getAppRun(pkgInfo)
   writeFile(appDir / "AppRun", run)
+  let img = loadImage[ColorRGBU](app_logo)
+  let img2 = img.resizedBicubic(256, 256)
+  img2.savePNG(appDir / ".DirIcon")
   let cmd = fmt"appimagetool {appDir} --output-file dist/{pkgInfo.name}.AppImage"
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
