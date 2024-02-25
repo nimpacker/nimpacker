@@ -76,18 +76,15 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
           {"localhost": {"NSExceptionAllowsInsecureHTTPLoads": true}.toTable}.toTable
           ])
   )
-  var documentTypes: seq[DocumentType] = @[]
-  if fileExists("app.json"):
-    let data = parseJson(readFile("app.json"))
-    if data.hasKey("fileAssociations"):
-      let ass = getElems(data["fileAssociations"])
-      for a in ass:
-        documentTypes.add create(DocumentType,
-          CFBundleTypeExtensions = some(@[a["ext"].getStr()]),
-          CFBundleTypeMIMETypes = some(@[a["mimeType"].getStr()]),
-          LSItemContentTypes = some(@[a["uti"].getStr()]),
-          CFBundleTypeRole = some(a["role"].getStr())
-        )
+  let documentTypes = metaInfo.fileAssociations.mapIt(
+    create(DocumentType,
+      CFBundleTypeExtensions = some(it.exts),
+      CFBundleTypeMIMETypes = some(it.mimes),
+      LSItemContentTypes = some(it.utis),
+      CFBundleTypeRole = some($it.role)
+    )
+  )
+
   let productName = metaInfo.productName
   let displayName = if productName.len > 0: productName else: pkgInfo.name 
 
