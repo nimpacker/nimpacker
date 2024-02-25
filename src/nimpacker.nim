@@ -311,6 +311,8 @@ proc packLinux(release:bool, icon: string) =
   let desktopPath = appDir / "usr" / "share" / "applications" / pkgInfo.name & ".desktop"
   writeFile(desktopPath, desktop)
   let exes = findExes(appDir)
+  for exe in exes:
+    inclFilePermissions(exe, {fpUserExec, fpGroupExec, fpOthersExec})
   let baseControl = getControlBasic(pkgInfo)
   writeFile(appDir / "debian" / "control", baseControl)
   let oldPWD = getCurrentDir()

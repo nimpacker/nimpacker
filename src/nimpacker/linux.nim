@@ -23,10 +23,10 @@ proc collectDeps*(exes:seq[string]): string =
     let cmd = fmt"dpkg-shlibdeps -e{file} -O"
     debugEcho cmd
     let (output, exitCode) = execCmdEx(cmd)
-    debugEcho output
     if not exitCode == 0:
       quit(output)
     else:
+      debugEcho output
       outputs.add output.substr(Prefix).strip()
   result = outputs.join(",")
 

@@ -101,7 +101,6 @@ elif defined(linux):
   mkDir APP_DIR / "usr" / "share" / "package_name"
   cpDir "data", APP_DIR / "usr" / "share" / "package_name" / "data"
   cpFile "drivers/chromedriver-linux64/chromedriver", APP_DIR / "usr" / "bin" / "chromedriver"
-  exec "chmod +x " & APP_DIR / "usr" / "bin" / "chromedriver"
 ```
 
 `APP_DIR` is defined via `nimpacker`
