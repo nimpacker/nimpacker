@@ -1,7 +1,6 @@
 import std/[os, json, tables, osproc, strutils, sequtils, strformat, oids, options, distros]
 import cligen
 import plists
-import zippy/ziparchives
 import icon
 import icon/icns
 import icon/ico
@@ -33,28 +32,9 @@ proc getPkgInfo(): PackageInfo =
   let jsonNode = parseJson(r.output)
   result = to(jsonNode, PackageInfo)
 
-proc zipBundle(dir: string): string =
-  let p = getTempDir() / "zipBundle.zip"
-  createZipArchive(dir, p)
-  return p
-
-proc handleBundle(wwwroot: string): string =
-  var zip: string
-  if len(wwwroot) > 0:
-    let path = absolutePath wwwroot
-    if not dirExists(path):
-      raise newException(OSError, fmt"dir {path} not existed.")
-    debugEcho path
-    zip = zipBundle(path)
-    debugEcho zip
-  return zip
-
-proc baseCmd(base: seq[string], wwwroot: string, release: bool, flags: seq[
+proc baseCmd(base: seq[string], release: bool, flags: seq[
     string]): seq[string] =
   result = base
-  let zip = handleBundle(wwwroot)
-  if len(wwwroot) > 0:
-    result.add fmt" -d:bundle='{zip}'"
   result.add flags
   let opts = if not release: DEBUG_OPTS else: RELEASE_OPTS
   result.add opts
@@ -79,7 +59,7 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     result = ImageInfo(size: size, filePath: optName)
   )
 
-proc buildMacos(app_logo: string, wwwroot = "", release = false, metaInfo: MetaInfo = default(MetaInfo), flags: seq[string]) =
+proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(MetaInfo), flags: seq[string]) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "macos"
@@ -112,7 +92,8 @@ proc buildMacos(app_logo: string, wwwroot = "", release = false, metaInfo: MetaI
   let displayName = if productName.len > 0: productName else: pkgInfo.name 
 
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
-  let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
+  # let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
+  let sec = none(NSAppTransportSecurity)
   let appInfo = create(CocoaAppInfo,
     NSHighResolutionCapable = some(true),
     CFBundlePackageType = some("APPL"),
@@ -148,7 +129,7 @@ proc buildMacos(app_logo: string, wwwroot = "", release = false, metaInfo: MetaI
   if not dirExists(appDir / "Contents"):
     createDir(appDir / "Contents")
   writePlist(plist, appDir / "Contents" / "Info.plist")
-  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release, flags)
+  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release, flags)
   let finalCMD = cmd.join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD, options = {poUsePath})
@@ -161,25 +142,25 @@ proc buildMacos(app_logo: string, wwwroot = "", release = false, metaInfo: MetaI
   else:
     debugEcho output
 
-proc runMacos(wwwroot = "", release = false, flags: seq[string]) =
+proc runMacos(release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
-  var cmd = baseCmd(@["nimble"], wwwroot, release, flags)
+  var cmd = baseCmd(@["nimble"], release, flags)
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
   debugEcho output
 
-proc runWindows(wwwroot = "", release = false, flags: seq[string]) =
+proc runWindows(release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
-  var cmd = baseCmd(@["nimble"], wwwroot, release, flags)
+  var cmd = baseCmd(@["nimble"], release, flags)
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
   debugEcho output
 
-proc runLinux(wwwroot = "", release = false, flags: seq[string]) =
+proc runLinux(release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
-  var cmd = baseCmd(@["nimble"], wwwroot, release, flags)
+  var cmd = baseCmd(@["nimble"], release, flags)
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
@@ -194,7 +175,7 @@ proc getAppDir(target: string, release: bool): string =
   if target == "macos":
     result = result / pkgInfo.name & ".app"
 
-proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[string]): string {.discardable.} =
+proc buildWindows(app_logo: string, release = false, flags: seq[string]): string {.discardable.} =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "windows"
@@ -213,13 +194,13 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
   var myflags: seq[string]
   when not defined(windows):
     myflags.add "-d:mingw"
-  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release,
+  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release,
       myflags.concat flags)
   # for windres
   # if logoExists:
   #   let (output, exitCode, resPath) = callWindres(icoPath)
   #   discard cmd.concat @[&"--passL:{resPath}"]
-  debugEcho output
+  #   debugEcho output
 
   let finalCMD = cmd.join(" ")
   debugEcho finalCMD
@@ -235,7 +216,7 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
     debugEcho o
   result = icoPath
 
-proc buildLinux(app_logo: string, wwwroot = "", release = false, flags: seq[string]) =
+proc buildLinux(app_logo: string, release = false, flags: seq[string]) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "linux"
@@ -243,7 +224,7 @@ proc buildLinux(app_logo: string, wwwroot = "", release = false, flags: seq[stri
   removeDir(buildDir)
   let appDir = buildDir / subDir
   createDir(appDir)
-  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release, flags)
+  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release, flags)
   let finalCMD = cmd.join(" ")
   debugEcho finalCMD
   let (o, e) = execCmdEx(finalCMD)
@@ -316,30 +297,29 @@ proc postScript(post_build: string, target: string, release: bool) =
     debugEcho output
 
 proc build(target: string, icon = "logo.png",
-    post_build = "nimpacker" / "post_build.nims", wwwroot = "",
+    post_build = "nimpacker" / "post_build.nims",
     release = false, flags: seq[string]): int =
   let metaInfo = getMetaInfo()
   case target:
     of "macos":
-      # nim c -r -f src/crownguipkg/cli.nim build --target macos --wwwroot ./docs
-      buildMacos(icon, wwwroot, release, metaInfo, flags)
+      buildMacos(icon, release, metaInfo, flags)
     of "windows":
-      buildWindows(icon, wwwroot, release, flags)
+      buildWindows(icon, release, flags)
     of "linux":
-      buildLinux(icon, wwwroot, release, flags)
+      buildLinux(icon, release, flags)
     else:
       discard
 
   postScript(post_build, target, release)
 
-proc run(target: string, wwwroot = "", release = false, flags: seq[string]): int =
+proc run(target: string, release = false, flags: seq[string]): int =
   case target:
     of "macos":
-      runMacos(wwwroot, release, flags)
+      runMacos(release, flags)
     of "windows":
-      runWindows(wwwroot, release, flags)
+      runWindows(release, flags)
     of "linux":
-      runLinux(wwwroot, release, flags)
+      runLinux(release, flags)
     else:
       discard
 
@@ -377,28 +357,28 @@ proc packMacos(release:bool, metaInfo: MetaInfo) =
   debugEcho output
 
 proc pack(target: string, icon = "logo.png",
-    post_build =  "nimpacker" / "post_build.nims", wwwroot = "",
+    post_build =  "nimpacker" / "post_build.nims",
     release = false, format = "", flags: seq[string]): int =
   let metaInfo = getMetaInfo()
   case target:
     of "macos":
-      buildMacos(icon, wwwroot, release, metaInfo, flags)
+      buildMacos(icon, release, metaInfo, flags)
       postScript(post_build, target, release)
       packMacos(release, metaInfo)
     of "windows":
-      let icoPath = buildWindows(icon, wwwroot, release, flags)
+      let icoPath = buildWindows(icon, release, flags)
       postScript(post_build, target, release)
       packWindows(release, icoPath, metaInfo)
     of "linux":
       if format == "":
-        buildLinux(icon, wwwroot, release, flags)
+        buildLinux(icon, release, flags)
         let appDir = getAppDir("linux", release)
         createDir(appDir / "usr" / "bin")
         createDir(appDir / "usr" / "lib")
         postScript(post_build, target, release)
         packLinux(release, icon)
       elif format == "appimage":
-        buildLinux(icon, wwwroot, release, flags)
+        buildLinux(icon, release, flags)
         let baseDir = getAppDir("linux", release)
         let pkgInfo = getPkgInfo()
         let appDir = baseDir / pkgInfo.name & ".AppDir"
