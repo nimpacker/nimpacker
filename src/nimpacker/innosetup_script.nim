@@ -14,14 +14,11 @@ proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string, met
     """
 
   var dict = newConfig()
-  # dict.setSectionKey("","charset", "utf-8")
   dict.setSectionKey("Setup", "AppId", "{{" & metaInfo.appId & "}", false)
   dict.setSectionKey("Setup", "OutputDir", getCurrentDir() / "dist", false)
-  # dict.setSectionKey("Package", "--threads", "on")
   dict.setSectionKey("Setup", "AppName", "{#MyAppName}", false)
   dict.setSectionKey("Setup", "AppVersion", "{#MyAppVersion}", false)
   dict.setSectionKey("Setup", ";AppVerName", "{#MyAppName} {#MyAppVersion}", false)
-
   dict.setSectionKey("Setup", "AppPublisher", "{#MyAppPublisher}", false)
   dict.setSectionKey("Setup", "AppPublisherURL", "{#MyAppURL}", false)
   dict.setSectionKey("Setup", "AppSupportURL", "{#MyAppURL}", false)
