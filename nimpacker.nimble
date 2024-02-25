@@ -34,3 +34,5 @@ elif detectOs(Debian) or detectOs(Ubuntu) or
   detectOs(MXLinux) or detectOs(Deepin) or detectOs(Parrot) or
   detectOs(Trisquel):
   foreignDep "dpkg-dev"
+elif detectOs(MacOSX):
+  foreignDep "create-dmg"
