@@ -167,10 +167,7 @@ proc runMacos(wwwroot = "", release = false, flags: seq[string]) =
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
-  if exitCode == 0:
-    debugEcho output
-  else:
-    debugEcho output
+  debugEcho output
 
 proc runWindows(wwwroot = "", release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
@@ -178,10 +175,7 @@ proc runWindows(wwwroot = "", release = false, flags: seq[string]) =
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
-  if exitCode == 0:
-    debugEcho output
-  else:
-    debugEcho output
+  debugEcho output
 
 proc runLinux(wwwroot = "", release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
@@ -189,10 +183,7 @@ proc runLinux(wwwroot = "", release = false, flags: seq[string]) =
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
-  if exitCode == 0:
-    debugEcho output
-  else:
-    debugEcho output
+  debugEcho output
 
 proc getAppDir(target: string, release: bool): string =
   let pkgInfo = getPkgInfo()
@@ -212,9 +203,6 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
   removeDir(buildDir)
   createDir(appDir)
   let logoExists = fileExists(app_logo)
-  # var res: string
-  # var output: string
-  # var exitCode: int
   var icoPath: string
   if logoExists:
     let png = zopflipng.loadPNG32(app_logo)
@@ -222,24 +210,16 @@ proc buildWindows(app_logo: string, wwwroot = "", release = false, flags: seq[st
     let images = genImages(png, @(ico.REQUIRED_IMAGE_SIZES))
     icoPath = generateICO(images.filterIt(it != default(ImageInfo)), tempDir)
     discard images.mapIt(tryRemoveFile(it.filePath))
-    # for windres
-    # let content = &"id ICON \"{path}\""
-    # let rc = getTempDir() / "my.rc"
-    # writeFile(rc, content)
-    # res = getTempDir() / "my.res"
-    # let resCmd = &"windres {rc} -O coff -o {res}"
-    # (output, exitCode) = execCmdEx(resCmd)
   var myflags: seq[string]
   when not defined(windows):
     myflags.add "-d:mingw"
   var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], wwwroot, release,
       myflags.concat flags)
   # for windres
-  # if logoExists and exitCode == 0:
-  #   discard cmd.concat @[&"--passL:{res}"]
-  #   debugEcho output
-  # else:
-  #   debugEcho output
+  # if logoExists:
+  #   let (output, exitCode, resPath) = callWindres(icoPath)
+  #   discard cmd.concat @[&"--passL:{resPath}"]
+  debugEcho output
 
   let finalCMD = cmd.join(" ")
   debugEcho finalCMD
