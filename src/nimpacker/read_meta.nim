@@ -13,7 +13,6 @@ const
   DefaultMetaPath* = "nimpacker" / "meta.nims"
 
 proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
-  echo metaPath
   if fileExists(metaPath):
     let ourScript = NimScriptFile(readFile(metaPath))
     let intr = loadScript(ourScript, scriptProcs)
