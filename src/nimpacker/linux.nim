@@ -48,7 +48,7 @@ proc getControlBasic*(pkgInfo: PackageInfo, metaInfo: MetaInfo): string =
   Version: {pkgInfo.version}
   Description: {pkgInfo.desc}
   Architecture: {arch}
-  Maintainer: YOUR NAME <EMAIL>
+  Maintainer: {metaInfo.maintainer}
   """.unindent
 
 proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: string, size: int): string =
@@ -60,7 +60,7 @@ proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: string, size
   Version: {pkgInfo.version}
   Description: {pkgInfo.desc}
   Architecture: {arch}
-  Maintainer: YOUR NAME <EMAIL>
+  Maintainer: {metaInfo.maintainer}
   Installed-Size: {size}
   Depends: {depends}
   """.unindent
