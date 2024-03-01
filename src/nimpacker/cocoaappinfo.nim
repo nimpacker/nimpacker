@@ -17,9 +17,12 @@ jsonSchema:
     NSAllowsLocalNetworking?:bool
     NSExceptionDomains ?: any
   DocumentType:
+    # Deprecated in OS X v10.5
     CFBundleTypeExtensions?:string[]
+    # Deprecated in OS X v10.5
     CFBundleTypeMIMETypes?:string[]
     LSItemContentTypes?:string[] # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/TP40009249-SW7
+    # Editor, Viewer, Shell, or None
     CFBundleTypeRole?:string
   CocoaAppInfo:
     CFBundleDisplayName: string
