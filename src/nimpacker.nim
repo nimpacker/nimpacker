@@ -413,8 +413,7 @@ proc pack(target: string, icon = "logo.png",
       if format == "":
         buildLinux(icon, wwwroot, release, flags)
         let appDir = getAppDir("linux", release)
-        createDir(appDir / "usr" / "bin")
-        createDir(appDir / "usr" / "lib")
+        createDebianTree(appDir)
         postScript(post_build, target, release)
         packLinux(release, icon)
       elif format == "appimage":

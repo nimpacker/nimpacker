@@ -65,15 +65,25 @@ proc getControl*(pkgInfo: PackageInfo, depends: string, size: int): string =
   Depends: {depends}
   """.unindent
 
-proc createDebianTree*(baseDir: string) =
-  createDir(baseDir / "debian")
-  # debian/control
+proc createLinuxTree*(baseDir: string) =
   createDir(baseDir / "usr" / "bin")
   createDir(baseDir / "usr" / "share" / "applications")
   # usr/share/applications/{pkgInof.name}.desktop
   createDir(baseDir / "usr" / "share" / "icons")
   # /usr/share/icons/{pkgInfo.name}.png
   # dpkg-deb --build
+
+  createDir(baseDir / "usr" / "sbin")
+  createDir(baseDir / "etc")
+  createDir(baseDir / "usr" / "lib")
+  createDir(baseDir / "var" / "lib")
+  createDir(baseDir / "var" / "log")
+  createDir(baseDir / "usr" / "include")
+
+proc createDebianTree*(baseDir: string) =
+  createDir(baseDir / "debian")
+  # debian/control
+  createLinuxTree(baseDir)
 
 proc getDesktop*(pkgInfo: PackageInfo, metaInfo: MetaInfo, format = ""): string =
   let productName = metaInfo.productName

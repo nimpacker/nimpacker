@@ -1,5 +1,5 @@
 import std/[os,strutils, strformat]
-import ./packageinfo
+import ./packageinfo,./linux
 
 proc createScalableIconsDir(baseDir: string) =
   createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "appps")
@@ -17,9 +17,8 @@ proc createNonScalableIconsDir(baseDir: string) =
 proc createAppImageTree*(baseDir: string) =
   ## https://docs.appimage.org/packaging-guide/manual.html#ref-manual
   ## https://docs.appimage.org/reference/appdir.html#root-icon
-  createDir(baseDir / "usr" / "bin")
-  createDir(baseDir / "usr" / "lib")
   createDir(baseDir / "usr" / "lib64")
+  createLinuxTree(baseDir)
 
 proc getAppRun*(pkgInfo: PackageInfo): string =
   result = fmt"""
