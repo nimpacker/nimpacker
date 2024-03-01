@@ -9,7 +9,7 @@ proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string, met
     #define MyAppName "{name}"
     #define MyAppVersion "{pkgInfo.version}"
     #define MyAppPublisher "{pkgInfo.author}"
-    #define MyAppURL ""
+    #define MyAppURL "{metaInfo.homepage}"
     #define MyAppExeName "{pkgInfo.name}.exe"
     """
 

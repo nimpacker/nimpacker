@@ -110,7 +110,7 @@ example `nimpacker/meta.nims`
 ```nim
 import os
 
-productName = "NimPacker"
+productName = "NimPacker" # default to package name
 
 # a GUID required by InnoSetup
 appId = staticRead(getCurrentDir() / "APPID.txt")
@@ -130,4 +130,7 @@ fileAssociations = @[
         role: DocumentTypeRole.Viewer
     )
 ]
+
+maintainer = "Debian QA Group <packages@qa.debian.org>" # deb Maintainer
+homepage = "https://nim-lang.org" # deb and exe Homepage
 ```

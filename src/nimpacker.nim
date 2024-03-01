@@ -271,7 +271,7 @@ proc packLinux(release:bool, icon: string) =
   let exes = findExes(appDir)
   for exe in exes:
     inclFilePermissions(exe, {fpUserExec, fpGroupExec, fpOthersExec})
-  let baseControl = getControlBasic(pkgInfo)
+  let baseControl = getControlBasic(pkgInfo, metaInfo)
   writeFile(appDir / "debian" / "control", baseControl)
   let oldPWD = getCurrentDir()
   setCurrentDir(appDir)
@@ -279,7 +279,7 @@ proc packLinux(release:bool, icon: string) =
   setCurrentDir(oldPWD)
   let size = getDirectorySize(appDir)
   let sizeInKb = size div 1024
-  let controlContent = getControl(pkgInfo, deps, sizeInKb)
+  let controlContent = getControl(pkgInfo, metaInfo, deps, sizeInKb)
   writeFile(appDir / "debian" / "control", controlContent)
   let cmd = fmt"dpkg-deb --build {appDir} dist"
   let (output, exitCode) = execCmdEx(cmd)

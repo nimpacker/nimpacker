@@ -39,7 +39,7 @@ proc getDirectorySize*(directory: string): int =
 
   return totalSize
 
-proc getControlBasic*(pkgInfo: PackageInfo): string =
+proc getControlBasic*(pkgInfo: PackageInfo, metaInfo: MetaInfo): string =
   ## size in kb
   let arch = hostCPU
   result = fmt"""
@@ -51,7 +51,7 @@ proc getControlBasic*(pkgInfo: PackageInfo): string =
   Maintainer: YOUR NAME <EMAIL>
   """.unindent
 
-proc getControl*(pkgInfo: PackageInfo, depends: string, size: int): string =
+proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: string, size: int): string =
   ## size in kb
   let arch = hostCPU
   result = fmt"""

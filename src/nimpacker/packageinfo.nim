@@ -1,4 +1,4 @@
-type PackageInfo* = object
+type PackageInfo* = ref object
   name*: string
   version*: string
   author*: string
@@ -11,13 +11,15 @@ type DocumentTypeRole* = enum
   Viewer = "Viewer"
   Shell = "Shell"
 
-type DocumentType* = object
+type DocumentType* = ref object
   exts*: seq[string]
   mimes*: seq[string]
   role*: DocumentTypeRole
   utis*: seq[string]
 
-type MetaInfo* = object
+type MetaInfo* = ref object
   productName*: string
   appId*: string
   fileAssociations*: seq[DocumentType]
+  maintainer*: string # deb Maintainer
+  homepage*: string # deb and exe Homepage
