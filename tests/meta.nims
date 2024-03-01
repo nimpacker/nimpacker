@@ -15,3 +15,6 @@ fileAssociations = @[
         role: DocumentTypeRole.Viewer
     )
 ]
+
+maintainer = "Debian QA Group <packages@qa.debian.org>" # deb Maintainer
+homepage = "https://nim-lang.org" # deb and exe Homepage
