@@ -81,6 +81,8 @@ example directory structure.
 
 `nimpacker/meta.nims` is variables defined for app meta info.
 
+`nimpacker/debian` scripts for deb package.
+
 example `nimpacker/post_build.nims`
 
 ```nim
@@ -94,18 +96,24 @@ const APP_DIR {.strdefine.} = ""
 
 echo "Build directory: " & APP_DIR
 
+let exe = "chromedriver".toExe
+
 when defined(macosx):
-  cpDir "data", fmt"{APP_DIR}/Contents/Resources/data"
-  mkDir fmt"{APP_DIR}/Contents/Resources/drivers/"
-  cpFile "drivers/chromedriver-mac-arm64/chromedriver", fmt"{APP_DIR}/Contents/Resources/drivers/chromedriver"
+  const ResourcesDir = APP_DIR / "Contents" / "Resources"
+  cpDir "data", ResourcesDir / "data"
+  mkDir ResourcesDir / "drivers"
+  let src = "drivers" / "chromedriver-mac-arm64" / exe
+  cpFile src, ResourcesDir / "drivers" / exe
 elif defined(windows):
   mkDir APP_DIR / "drivers"
   cpDir "data", APP_DIR / "data"
-  cpFile "drivers" / "chromedriver-win64" / "chromedriver.exe", APP_DIR / "drivers" / "chromedriver.exe"
+  let src = "drivers" / "chromedriver-win64" / exe
+  cpFile src, APP_DIR / "drivers" / exe
 elif defined(linux):
   mkDir APP_DIR / "usr" / "share" / "package_name"
   cpDir "data", APP_DIR / "usr" / "share" / "package_name" / "data"
-  cpFile "drivers/chromedriver-linux64/chromedriver", APP_DIR / "usr" / "bin" / "chromedriver"
+  let src = "drivers" / "chromedriver-linux64" / exe
+  cpFile src, APP_DIR / "usr" / "bin" / exe
 ```
 
 `APP_DIR` is defined via `nimpacker`
@@ -123,7 +131,7 @@ appId = staticRead(getCurrentDir() / "APPID.txt")
 # file associations, used for MacOS
 fileAssociations = @[
     DocumentType(
-        exts: @["xlsx", "xls"], 
+        exts: @["xlsx", "xls"],
         mimes: @[
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "application/vnd.ms-excel"
