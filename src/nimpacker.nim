@@ -271,6 +271,11 @@ proc packLinux(release:bool, icon: string) =
   let exes = findExes(appDir)
   for exe in exes:
     inclFilePermissions(exe, {fpUserExec, fpGroupExec, fpOthersExec})
+  const DebScripts = ["preinst", "postinst", "prerm", "postrm"]
+  for script in DebScripts:
+    if fileExists("nimpacker" / "debian" / script):
+      copyFile("nimpacker" / "debian" / script, appDir / "debian" / script)
+      inclFilePermissions(appDir / "debian" / script, {fpUserExec, fpGroupExec, fpOthersExec})
   let baseControl = getControlBasic(pkgInfo, metaInfo)
   writeFile(appDir / "debian" / "control", baseControl)
   let oldPWD = getCurrentDir()

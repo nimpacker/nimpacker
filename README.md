@@ -66,7 +66,12 @@ example directory structure.
 ├── package_name.nimble
 ├── nimpacker
 │   ├── post_build.nims
-│   └── meta.nims
+│   ├── meta.nims
+│   └── debian
+│       ├── preinst
+│       ├── postinst
+│       ├── prerm
+│       └── postrm
 
 ```
 
