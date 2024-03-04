@@ -4,7 +4,7 @@ import os, std/distros
 
 version       = "0.2.1"
 author        = "bung87"
-description   = "A new awesome nimble package"
+description   = "Build and packaging nimble binary package for Windows, macOS and Linux"
 license       = "MIT"
 srcDir        = "src"
 bin           = @["nimpacker"]
