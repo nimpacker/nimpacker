@@ -30,13 +30,31 @@ exportTo(myImpl, writeFile)
 proc httpGet(url: string, headers: seq[(string, string)] = @[], timeout: float32 = 60): Response =
   get(url, headers, timeout)
 
-# exportTo(myImpl, puppy.fetch)
+proc httpFetch(url: string, headers: seq[(string, string)] = @[]): string =
+  fetch(url, headers)
+
+proc httpPost(url: string, headers: seq[(string, string)] = @[], body: sink string = "", timeout: float32 = 60): Response =
+  post(url, headers, body, timeout)
+
+proc httpPut(url: string, headers: seq[(string, string)] = @[], body: sink string = "", timeout: float32 = 60): Response =
+  put(url, headers, body, timeout)
+
+proc httpPatch(url: string, headers: seq[(string, string)] = @[], body: sink string = "", timeout: float32 = 60): Response =
+  patch(url, headers, body, timeout)
+
+proc httpDelete(url: string, headers: seq[(string, string)] = @[], timeout: float32 = 60): Response =
+  delete(url, headers, timeout)
+
+proc httpHead(url: string, headers: seq[(string, string)] = @[], timeout: float32 = 60): Response =
+  head(url, headers, timeout)
+
+exportTo(myImpl, httpFetch)
 exportTo(myImpl, httpGet)
-# exportTo(myImpl, puppy.post)
-# exportTo(myImpl, puppy.put)
-# exportTo(myImpl, puppy.patch)
-# exportTo(myImpl, puppy.delete)
-# exportTo(myImpl, puppy.head)
+exportTo(myImpl, httpPost)
+exportTo(myImpl, httpPut)
+exportTo(myImpl, httpPatch)
+exportTo(myImpl, httpDelete)
+exportTo(myImpl, httpHead)
 
 addVmops(myImpl)
 
