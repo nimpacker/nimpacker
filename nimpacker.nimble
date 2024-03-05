@@ -22,6 +22,7 @@ requires "icon >= 0.2.0"
 requires "jsonschema"
 requires "parseini"
 requires "nimscripter >= 1.1.5"
+requires "puppy"
 
 when NimMajor >= 2:
   requires "checksums"

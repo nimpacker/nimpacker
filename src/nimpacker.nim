@@ -11,7 +11,7 @@ import zopflipng
 import rcedit
 include nimpacker/packageinfo_schema
 include nimpacker/cocoaappinfo
-import nimpacker/[packageinfo, read_meta]
+import nimpacker/[packageinfo, scripter]
 import nimpacker/[innosetup_script, linux, macos, appimage]
 
 when NimMajor >= 2:

@@ -1,5 +1,5 @@
 import os
-import nimpacker/read_meta
+import nimpacker/scripter
 
 
 let path =  currentSourcePath.parentDir / "meta.nims"
