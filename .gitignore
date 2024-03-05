@@ -1,6 +1,7 @@
 *
 !**/
 !*.*
+*.zip
 .DS_Store
 !.gitattributes
 !.gitignore

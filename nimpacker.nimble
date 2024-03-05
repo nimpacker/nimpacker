@@ -21,7 +21,7 @@ requires "rcedit"
 requires "icon >= 0.2.0"
 requires "jsonschema"
 requires "parseini"
-requires "nimscripter >= 1.1.4"
+requires "nimscripter >= 1.1.5"
 
 when NimMajor >= 2:
   requires "checksums"
