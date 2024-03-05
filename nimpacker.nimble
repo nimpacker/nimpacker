@@ -2,7 +2,7 @@ import os, std/distros
 
 # Package
 
-version       = "0.2.1"
+version       = "0.2.2"
 author        = "bung87"
 description   = "Build and packaging nimble binary package for Windows, macOS and Linux"
 license       = "MIT"
