@@ -1,4 +1,5 @@
-import std/[os,strutils, strformat]
+import std/[os, strutils, strformat, streams]
+import yaml, yaml/style
 import ./packageinfo,./linux
 
 proc createScalableIconsDir(baseDir: string) =
@@ -32,3 +33,27 @@ proc getAppRun*(pkgInfo: PackageInfo): string =
   $APPDIR/usr/bin/{pkgInfo.name} "$@"
   """.unindent
 
+type
+  AppInfo* = object
+    id: string
+    name: string
+    icon: string
+    version: string
+    exec: string
+    exec_args: string
+  AppDir* = object
+    app_info: AppInfo
+  Recipe* = object
+    AppDir: AppDir
+
+const AppImageBuilderConfName* = "AppImageBuilder.yml"
+
+proc writeBuildConfig*(pkgInfo: PackageInfo, outDir: string) =
+  var info = AppInfo()
+  info.id = pkgInfo.name
+  info.name = pkgInfo.name
+  info.version = pkgInfo.version
+  var appDir = AppDir(app_info: info)
+  var s = newFileStream(outDir / AppImageBuilderConfName, fmWrite)
+  Dumper().dump(Recipe(AppDir: appDir), s)
+  s.close()

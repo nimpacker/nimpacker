@@ -23,6 +23,7 @@ requires "jsonschema"
 requires "parseini"
 requires "nimscripter >= 1.1.5"
 requires "puppy"
+requires "yaml"
 
 when NimMajor >= 2:
   requires "checksums"

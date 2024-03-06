@@ -213,14 +213,17 @@ proc buildWindows(app_logo: string, release = false, flags: seq[string]): string
     debugEcho o
   result = icoPath
 
-proc buildLinux(app_logo: string, release = false, flags: seq[string]) =
+proc buildLinux(app_logo: string, release = false, format = "deb", flags: seq[string]) =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "linux"
   let subDir = if release: "Release" else: "Debug"
   removeDir(buildDir)
-  let appDir = buildDir / subDir
+  var appDir = buildDir / subDir
+  # if format == "appimage":
+  #   appDir = appDir / pkgInfo.name & ".AppDir"
   createDir(appDir)
+  createLinuxTree(appDir)
   var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release, flags)
   let finalCMD = cmd.join(" ")
   debugEcho finalCMD
@@ -239,7 +242,7 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   let subDir = if release: "Release" else: "Debug"
   let appDir = buildDir / subDir / pkgInfo.name & ".AppDir"
   removeDir(appDir)
-  createDir(appDir)
+  # createDir(appDir)
   createAppImageTree(appDir)
   moveFile(buildDir / subDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
   let logoExists = fileExists(app_logo)
@@ -253,7 +256,11 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   let img = loadImage[ColorRGBU](app_logo)
   let img2 = img.resizedBicubic(256, 256)
   img2.savePNG(appDir / ".DirIcon")
-  let cmd = fmt"appimagetool {appDir} --output-file dist/{pkgInfo.name}.AppImage"
+  let tempDir = getTempDir()
+  writeBuildConfig(pkgInfo, tempDir)
+  let recipe = tempDir / AppImageBuilderConfName
+  let cmd = fmt"appimage-builder --recipe {recipe} --appdir {appDir}"
+  debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
   quit(exitCode)
@@ -291,9 +298,9 @@ proc packLinux(release:bool, icon: string) =
   debugEcho output
   quit(exitCode)
 
-proc postScript(post_build: string, target: string, release: bool) =
+proc postScript(post_build: string, target: string, release: bool, appDir = "") =
   if post_build.len > 0 and fileExists(post_build):
-    let appDir = getAppDir(target, release)
+    let appDir = if appDir.len == 0: getAppDir(target, release) else: appDir
     let cmd = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" {post_build}"""
     let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
     debugEcho output
@@ -308,7 +315,7 @@ proc build(target: string, icon = "logo.png",
     of "windows":
       buildWindows(icon, release, flags)
     of "linux":
-      buildLinux(icon, release, flags)
+      buildLinux(icon, release, "deb", flags)
     else:
       discard
 
@@ -373,18 +380,19 @@ proc pack(target: string, icon = "logo.png",
       packWindows(release, icoPath, metaInfo)
     of "linux":
       if format == "":
-        buildLinux(icon, release, flags)
+        buildLinux(icon, release, format, flags)
         let appDir = getAppDir("linux", release)
         createDebianTree(appDir)
         postScript(post_build, target, release)
         packLinux(release, icon)
       elif format == "appimage":
-        buildLinux(icon, release, flags)
+        buildLinux(icon, release, format, flags)
         let baseDir = getAppDir("linux", release)
         let pkgInfo = getPkgInfo()
         let appDir = baseDir / pkgInfo.name & ".AppDir"
         createAppImageTree(appDir)
-        postScript(post_build, target, release)
+        # moveFile(baseDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
+        postScript(post_build, target, release, appDir)
         packAppImage(release, icon, metaInfo)
     else:
       discard
