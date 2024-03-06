@@ -44,6 +44,7 @@ type
   AppDir* = object
     app_info: AppInfo
   Recipe* = object
+    version: int
     AppDir: AppDir
 
 const AppImageBuilderConfName* = "AppImageBuilder.yml"
@@ -53,7 +54,9 @@ proc writeBuildConfig*(pkgInfo: PackageInfo, outDir: string) =
   info.id = pkgInfo.name
   info.name = pkgInfo.name
   info.version = pkgInfo.version
+  info.exec = "usr/bin/" & pkgInfo.name
+  info.exec_args = "$@"
   var appDir = AppDir(app_info: info)
   var s = newFileStream(outDir / AppImageBuilderConfName, fmWrite)
-  Dumper().dump(Recipe(AppDir: appDir), s)
+  Dumper().dump(Recipe(version: 1, AppDir: appDir), s)
   s.close()

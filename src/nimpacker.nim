@@ -263,7 +263,8 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
-  quit(exitCode)
+  let (output2, exitCode2) = execCmdEx(fmt"ARCH=x86_64 appimagetool {appDir}")
+  quit(exitCode2)
 
 proc packLinux(release:bool, icon: string) =
   let pkgInfo = getPkgInfo()
