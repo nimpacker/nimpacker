@@ -7,17 +7,18 @@ proc createScalableIconsDir(baseDir: string) =
   # icon.svg
 
 proc createNonScalableIconsDir(baseDir: string) =
-  createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "48x48" / "apps")
+  createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "48x48" / "apps")
   # icon.png
   # in desktop file: Icon=/usr/share/icons/hicolor/48x48/apps/icon.png
-  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "16x16" / "apps")
-  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "32x32" / "apps")
-  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "256x256" / "apps")
-  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "512x512" / "apps")
+  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "16x16" / "apps")
+  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "32x32" / "apps")
+  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "256x256" / "apps")
+  # createDir(baseDir / "usr" / "share" / "icons" / "hicolor" / "512x512" / "apps")
 
 proc createAppImageTree*(baseDir: string) =
   ## https://docs.appimage.org/packaging-guide/manual.html#ref-manual
   ## https://docs.appimage.org/reference/appdir.html#root-icon
+  # https://github.com/probonopd/linuxdeployqt#simplest-example
   createDir(baseDir / "usr" / "lib64")
   createLinuxTree(baseDir)
 

@@ -246,27 +246,33 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   createAppImageTree(appDir)
   moveFile(buildDir / subDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
   let logoExists = fileExists(app_logo)
-  let iconDir = appDir / "usr" / "share" / "icons" / "48x48" / "apps"
+  let iconDir = appDir / "usr" / "share" / "icons" / "hicolor" / "48x48" / "apps"
   createDir iconDir
   copyFile(app_logo, iconDir / pkgInfo.name & ".png")
   let metaInfo = getMetaInfo()
   let desktop = getDesktop(pkgInfo, metaInfo,"appimage")
   let desktopPath = appDir / "usr" / "share" / "applications" / pkgInfo.name & ".desktop"
   writeFile(desktopPath, desktop)
-  let run = getAppRun(pkgInfo)
-  writeFile(appDir / "AppRun", run)
-  let img = loadImage[ColorRGBU](app_logo)
-  let img2 = img.resizedBicubic(256, 256)
-  img2.savePNG(appDir / ".DirIcon")
-  let tempDir = getTempDir()
-  writeBuildConfig(pkgInfo, tempDir)
-  let recipe = tempDir / AppImageBuilderConfName
-  let cmd = fmt"appimage-builder --recipe {recipe} --appdir {appDir}"
+
+  # appimage-builder stuffs below
+  # let run = getAppRun(pkgInfo)
+  # writeFile(appDir / "AppRun", run)
+  # let img = loadImage[ColorRGBU](app_logo)
+  # let img2 = img.resizedBicubic(256, 256)
+  # img2.savePNG(appDir / ".DirIcon")
+  # let tempDir = getTempDir()
+  # writeBuildConfig(pkgInfo, tempDir)
+  # let recipe = tempDir / AppImageBuilderConfName
+  # let cmd = fmt"appimage-builder --recipe {recipe} --appdir {appDir}"
+  # debugEcho cmd
+  # let (output, exitCode) = execCmdEx(cmd)
+  # debugEcho output
+  # let (output2, exitCode2) = execCmdEx(fmt"ARCH=x86_64 appimagetool {appDir}")
+  # quit(exitCode2)
+  let cmd = fmt"linuxdeployqt {appDir}/usr/share/applications/initium.desktop -appimage "
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
-  let (output2, exitCode2) = execCmdEx(fmt"ARCH=x86_64 appimagetool {appDir}")
-  quit(exitCode2)
 
 proc packLinux(release:bool, icon: string) =
   let pkgInfo = getPkgInfo()

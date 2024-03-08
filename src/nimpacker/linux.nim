@@ -91,14 +91,16 @@ proc getDesktop*(pkgInfo: PackageInfo, metaInfo: MetaInfo, format = ""): string 
   var dict = newConfig()
   dict.setSectionKey("Desktop Entry", "Name", name, false)
   dict.setSectionKey("Desktop Entry", "Comment", pkgInfo.desc, false)
-  let exec = if format == "appimage": "usr/bin/" & pkgInfo.name else: pkgInfo.name
+  # appimage-builder
+  # let exec = if format == "appimage": "usr/bin/" & pkgInfo.name else: pkgInfo.name
+  let exec = pkgInfo.name
   dict.setSectionKey("Desktop Entry", "Exec", exec , false)
   let icon = if format == "appimage": pkgInfo.name else: fmt"/usr/share/icons/{pkgInfo.name}.png"
   dict.setSectionKey("Desktop Entry", "Icon", icon, false)
   dict.setSectionKey("Desktop Entry", "Terminal", "false", false)
   dict.setSectionKey("Desktop Entry", "Type", "Application", false)
-  dict.setSectionKey("Desktop Entry", "Categories", "Office", false)
-  dict.setSectionKey("Desktop Entry", "Version", pkgInfo.version, false)
+  dict.setSectionKey("Desktop Entry", "Categories", "Office;", false)
+  # dict.setSectionKey("Desktop Entry", "Version", pkgInfo.version, false)
   result = $dict
 
 when isMainModule:
