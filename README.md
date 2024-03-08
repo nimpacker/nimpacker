@@ -1,4 +1,4 @@
-# nimpacker
+# nimpacker  ![Build Status](https://github.com/nimpacker/nimpacker/workflows/build/badge.svg) 
 
 Build and packaging nimble binary package for Windows, macOS and Linux.
 
