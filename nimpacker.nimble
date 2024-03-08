@@ -35,5 +35,9 @@ elif detectOs(Debian) or detectOs(Ubuntu) or
   detectOs(MXLinux) or detectOs(Deepin) or detectOs(Parrot) or
   detectOs(Trisquel):
   foreignDep "dpkg-dev"
+
+  # appimage
+  foreignDep "fuse3"
+  foreignDep "desktop-file-utils"
 elif detectOs(MacOSX):
   foreignDep "create-dmg"

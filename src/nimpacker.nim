@@ -241,15 +241,17 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   let buildDir = pwd / "build" / "linux"
   let subDir = if release: "Release" else: "Debug"
   let appDir = buildDir / subDir / pkgInfo.name & ".AppDir"
-  removeDir(appDir)
+  # removeDir(appDir)
   # createDir(appDir)
   createAppImageTree(appDir)
   moveFile(buildDir / subDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
   let logoExists = fileExists(app_logo)
-  copyFile(app_logo, appDir / pkgInfo.name & ".png")
+  let iconDir = appDir / "usr" / "share" / "icons" / "48x48" / "apps"
+  createDir iconDir
+  copyFile(app_logo, iconDir / pkgInfo.name & ".png")
   let metaInfo = getMetaInfo()
   let desktop = getDesktop(pkgInfo, metaInfo,"appimage")
-  let desktopPath = appDir / pkgInfo.name & ".desktop"
+  let desktopPath = appDir / "usr" / "share" / "applications" / pkgInfo.name & ".desktop"
   writeFile(desktopPath, desktop)
   let run = getAppRun(pkgInfo)
   writeFile(appDir / "AppRun", run)
@@ -387,10 +389,10 @@ proc pack(target: string, icon = "logo.png",
         postScript(post_build, target, release)
         packLinux(release, icon)
       elif format == "appimage":
-        buildLinux(icon, release, format, flags)
         let baseDir = getAppDir("linux", release)
         let pkgInfo = getPkgInfo()
         let appDir = baseDir / pkgInfo.name & ".AppDir"
+        buildLinux(icon, release, format, flags)
         createAppImageTree(appDir)
         # moveFile(baseDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
         postScript(post_build, target, release, appDir)

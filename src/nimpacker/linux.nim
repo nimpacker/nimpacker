@@ -91,7 +91,8 @@ proc getDesktop*(pkgInfo: PackageInfo, metaInfo: MetaInfo, format = ""): string 
   var dict = newConfig()
   dict.setSectionKey("Desktop Entry", "Name", name, false)
   dict.setSectionKey("Desktop Entry", "Comment", pkgInfo.desc, false)
-  dict.setSectionKey("Desktop Entry", "Exec", pkgInfo.name , false)
+  let exec = if format == "appimage": "usr/bin/" & pkgInfo.name else: pkgInfo.name
+  dict.setSectionKey("Desktop Entry", "Exec", exec , false)
   let icon = if format == "appimage": pkgInfo.name else: fmt"/usr/share/icons/{pkgInfo.name}.png"
   dict.setSectionKey("Desktop Entry", "Icon", icon, false)
   dict.setSectionKey("Desktop Entry", "Terminal", "false", false)
