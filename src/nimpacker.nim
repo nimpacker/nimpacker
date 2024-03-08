@@ -383,8 +383,9 @@ proc pack(target: string, icon = "logo.png",
       packWindows(release, icoPath, metaInfo)
     of "linux":
       if format == "":
-        buildLinux(icon, release, format, flags)
         let appDir = getAppDir("linux", release)
+        removeDir(appDir)
+        buildLinux(icon, release, format, flags)
         createDebianTree(appDir)
         postScript(post_build, target, release)
         packLinux(release, icon)
@@ -392,9 +393,9 @@ proc pack(target: string, icon = "logo.png",
         let baseDir = getAppDir("linux", release)
         let pkgInfo = getPkgInfo()
         let appDir = baseDir / pkgInfo.name & ".AppDir"
+        removeDir(appDir)
         buildLinux(icon, release, format, flags)
         createAppImageTree(appDir)
-        # moveFile(baseDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
         postScript(post_build, target, release, appDir)
         packAppImage(release, icon, metaInfo)
     else:
