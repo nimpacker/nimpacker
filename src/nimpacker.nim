@@ -27,7 +27,6 @@ const RELEASE_OPTS = " -d:release " # -d:noSignalHandler --exceptions:quirky
 const CACHE_DIR_NAME = ".nimpacker_cache"
 
 proc getPkgInfo(): PackageInfo =
-  # let r = execProcess(fmt"nimble",args=["dump", "--json", getCurrentDir()],options={poUsePath})
   let r = execCmdEx("nimble dump --json --silent " & getCurrentDir())
   let jsonNode = parseJson(r.output)
   result = to(jsonNode, PackageInfo)
@@ -269,7 +268,7 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   # debugEcho output
   # let (output2, exitCode2) = execCmdEx(fmt"ARCH=x86_64 appimagetool {appDir}")
   # quit(exitCode2)
-  let cmd = fmt"linuxdeployqt {appDir}/usr/share/applications/initium.desktop -appimage "
+  let cmd = fmt"linuxdeployqt {appDir}/usr/share/applications/initium.desktop -appimage"
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
@@ -407,4 +406,32 @@ proc pack(target: string, icon = "logo.png",
     else:
       discard
 
-dispatchMulti([build], [run], [pack])
+proc installLinuxdeployqt() =
+  block download:
+    const url = "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+    let (output, exitCode) = execCmdEx("curl -L -o linuxdeployqt-continuous-x86_64.AppImage " & url)
+    debugEcho output
+  block chmod:
+    let (output, exitCode) = execCmdEx("chmod +X linuxdeployqt-continuous-x86_64.AppImage")
+    debugEcho output
+  block cp:
+    let (output, exitCode) = execCmdEx("sudo cp linuxdeployqt-continuous-x86_64.AppImage /usr/local/bin/linuxdeployqt")
+    debugEcho output
+
+proc install(pkg: string) =
+  ## install `create-dmg`,`dpkg-dev`, `linuxdeployqt` or `InnoSetup`
+  if pkg == "linuxdeployqt":
+    installLinuxdeployqt()
+    return
+  var pkg1: string
+  for item in ["create-dmg", "dpkg-dev", "InnoSetup"]:
+    if cmpIgnoreCase(pkg, item) == 0:
+      pkg1 = "create-dmg"
+  if pkg1.len == 0:
+    quit("unknown package")
+  let (cmd, sudo) = foreignDepInstallCmd($pkg)
+  let (output, exitCode) = execCmdEx(if sudo: "sudo " & cmd else: cmd, options = {poUsePath, poParentStreams})
+  debugEcho output
+  quit(exitCode)
+
+dispatchMulti([build], [run], [pack], [install])
