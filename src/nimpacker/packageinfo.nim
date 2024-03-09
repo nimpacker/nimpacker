@@ -23,3 +23,4 @@ type MetaInfo* = ref object
   fileAssociations*: seq[DocumentType]
   maintainer*: string # deb Maintainer
   homepage*: string # deb and exe Homepage
+  linuxCategories*: seq[string]

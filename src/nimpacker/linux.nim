@@ -99,7 +99,9 @@ proc getDesktop*(pkgInfo: PackageInfo, metaInfo: MetaInfo, format = ""): string 
   dict.setSectionKey("Desktop Entry", "Icon", icon, false)
   dict.setSectionKey("Desktop Entry", "Terminal", "false", false)
   dict.setSectionKey("Desktop Entry", "Type", "Application", false)
-  dict.setSectionKey("Desktop Entry", "Categories", "Office;", false)
+  if metaInfo.linuxCategories.len > 0:
+    let cates = metaInfo.linuxCategories.join(";") & ";"
+    dict.setSectionKey("Desktop Entry", "Categories", cates, false)
   # dict.setSectionKey("Desktop Entry", "Version", pkgInfo.version, false)
   result = $dict
 

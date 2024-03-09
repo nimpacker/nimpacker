@@ -9,6 +9,7 @@ addVariable(myImpl, appId, string)
 addVariable(myImpl, fileAssociations, seq[DocumentType])
 addVariable(myImpl, maintainer, string)
 addVariable(myImpl, homepage, string)
+addVariable(myImpl, linuxCategories, seq[string])
 
 # exportTo(myImpl, webby.QueryParams)
 # exportTo(myImpl, webby.Url)
@@ -73,11 +74,13 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     var maintainer = intr.getGlobalVariable[:string]("maintainer")
     if maintainer.len == 0: maintainer = "YOUR NAME <EMAIL>"
     let homepage = intr.getGlobalVariable[:string]("homepage")
+    let linuxCategories = intr.getGlobalVariable[:seq[string]]("linuxCategories")
     result.productName = productName
     result.appId = appId
     result.fileAssociations = fileAssociations
     result.maintainer = maintainer
     result.homepage = homepage
+    result.linuxCategories = linuxCategories
 
 proc exec*(path: string) =
   if fileExists(path):
