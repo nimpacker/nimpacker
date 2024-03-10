@@ -430,8 +430,18 @@ proc install(pkg: string) =
   if pkg1.len == 0:
     quit("unknown package")
   let (cmd, sudo) = foreignDepInstallCmd($pkg)
-  let (output, exitCode) = execCmdEx(if sudo: "sudo " & cmd else: cmd, options = {poUsePath, poParentStreams})
-  debugEcho output
-  quit(exitCode)
+
+  when defined(windows):
+    let (output, exitCode) = execCmdEx(fmt"powershell.exe Start-Process -FilePath 'powershell' -Verb runAs -ArgumentList 'choco','install', '{$pkg}'", options = {poEchoCmd, poUsePath, poEvalCommand}, input="Y")
+    debugEcho output
+    quit(exitCode)
+  else:
+    let sudoCmd = if sudo:
+      fmt"sudo {cmd}"
+    else:
+      cmd
+    let (output, exitCode) = execCmdEx(sudoCmd, options = {poEchoCmd, poUsePath})
+    debugEcho output
+    quit(exitCode)
 
 dispatchMulti([build], [run], [pack], [install])
