@@ -254,8 +254,10 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   writeFile(desktopPath, desktop)
 
   # appimage-builder stuffs below
-  # let run = getAppRun(pkgInfo)
-  # writeFile(appDir / "AppRun", run)
+  if not fileExists(appDir / "AppRun"):
+    let run = getAppRun(pkgInfo)
+    writeFile(appDir / "AppRun", run)
+    inclFilePermissions(appDir / "AppRun", {fpUserExec, fpGroupExec, fpOthersExec})
   # let img = loadImage[ColorRGBU](app_logo)
   # let img2 = img.resizedBicubic(256, 256)
   # img2.savePNG(appDir / ".DirIcon")
@@ -432,7 +434,8 @@ proc install(pkg: string) =
   let (cmd, sudo) = foreignDepInstallCmd($pkg)
 
   when defined(windows):
-    let (output, exitCode) = execCmdEx(fmt"powershell.exe Start-Process -FilePath 'powershell' -Verb runAs -ArgumentList 'choco','install', '{$pkg}'", options = {poEchoCmd, poUsePath, poEvalCommand}, input="Y")
+    let cmd = fmt"powershell.exe Start-Process -FilePath 'powershell' -Verb runAs -ArgumentList 'choco','install', '{$pkg}'"
+    let (output, exitCode) = execCmdEx(cmd, options = {poEchoCmd, poUsePath, poEvalCommand}, input="Y")
     debugEcho output
     quit(exitCode)
   else:
