@@ -434,8 +434,8 @@ proc install(pkg: string) =
   let (cmd, sudo) = foreignDepInstallCmd($pkg)
 
   when defined(windows):
-    let cmd = fmt"powershell.exe Start-Process -FilePath 'powershell' -Verb runAs -ArgumentList 'choco','install', '{$pkg}'"
-    let (output, exitCode) = execCmdEx(cmd, options = {poEchoCmd, poUsePath, poEvalCommand}, input="Y")
+    let cmd1 = fmt"powershell.exe Start-Process -FilePath 'powershell' -Verb runAs -ArgumentList 'choco','install', '{$pkg}'"
+    let (output, exitCode) = execCmdEx(cmd1, options = {poEchoCmd, poUsePath, poEvalCommand}, input="Y")
     debugEcho output
     quit(exitCode)
   else:
