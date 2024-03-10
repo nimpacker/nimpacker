@@ -22,11 +22,11 @@ Produced files under `./build`
 
 Packaging nimble binary package into (`.exe`, `.dmg`, `.deb`)
 
-on Windows will generate installer exe via `Inno Setup`, `APPID.txt` is required.
+on Windows will generate installer exe via `Inno Setup`.
 
 on macOS will generate `.dmg` via `create-dmg`.
 
-on Linux will generate `.deb` via `dpkg-dev` tools.
+on Linux will generate `.deb` via `dpkg-dev` and `.AppImage` via `linuxdeployqt`.
 
 Produced files under `./dist`
 
@@ -146,4 +146,5 @@ fileAssociations = @[
 
 maintainer = "Debian QA Group <packages@qa.debian.org>" # deb Maintainer
 homepage = "https://nim-lang.org" # deb and exe Homepage
+linuxCategories = @["Utility"]
 ```
