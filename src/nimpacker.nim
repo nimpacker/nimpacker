@@ -278,6 +278,15 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
 const Perm755 = {fpUserExec, fpUserWrite, fpUserRead, 
                           fpGroupExec, fpGroupRead, 
                           fpOthersExec, fpOthersRead}
+
+proc convertLineEndings(filename: string, dest: string) =
+  var lines: seq[string]
+  var content: string
+  content = readFile(filename)
+  lines = content.splitLines()
+  content = lines.join("\n")
+  writeFile(dest, content)
+
 proc packLinux(release:bool, icon: string) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("linux", release)
@@ -294,7 +303,8 @@ proc packLinux(release:bool, icon: string) =
   const DebScripts = ["preinst", "postinst", "prerm", "postrm"]
   for script in DebScripts:
     if fileExists("nimpacker" / "debian" / script):
-      copyFile("nimpacker" / "debian" / script, appDir / "debian" / script)
+      # copyFile("nimpacker" / "debian" / script, appDir / "debian" / script)
+      convertLineEndings("nimpacker" / "debian" / script, appDir / "debian" / script)
       # inclFilePermissions(appDir / "debian" / script, {fpUserExec, fpGroupExec, fpOthersExec})
       setFilePermissions(appDir / "debian" / script, Perm755)
       
@@ -309,6 +319,7 @@ proc packLinux(release:bool, icon: string) =
   let sizeInKb = size div 1024
   let controlContent = getControl(pkgInfo, metaInfo, deps, sizeInKb)
   writeFile(appDir / "debian" / "control", controlContent)
+  setFilePermissions(appDir / "debian" / "control", Perm755)
   let cmd = fmt"dpkg-deb --build {appDir} dist"
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
