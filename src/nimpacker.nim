@@ -275,6 +275,9 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
 
+const Perm755 = {fpUserExec, fpUserWrite, fpUserRead, 
+                          fpGroupExec, fpGroupRead, 
+                          fpOthersExec, fpOthersRead}
 proc packLinux(release:bool, icon: string) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("linux", release)
@@ -292,9 +295,12 @@ proc packLinux(release:bool, icon: string) =
   for script in DebScripts:
     if fileExists("nimpacker" / "debian" / script):
       copyFile("nimpacker" / "debian" / script, appDir / "debian" / script)
-      inclFilePermissions(appDir / "debian" / script, {fpUserExec, fpGroupExec, fpOthersExec})
+      # inclFilePermissions(appDir / "debian" / script, {fpUserExec, fpGroupExec, fpOthersExec})
+      setFilePermissions(appDir / "debian" / script, Perm755)
+      
   let baseControl = getControlBasic(pkgInfo, metaInfo)
   writeFile(appDir / "debian" / "control", baseControl)
+  setFilePermissions(appDir / "debian" / "control", Perm755)
   let oldPWD = getCurrentDir()
   setCurrentDir(appDir)
   let deps = collectDeps(exes)

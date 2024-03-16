@@ -18,7 +18,8 @@ proc findExes*(baseDir: string): seq[string] =
 
 proc collectDeps*(exes:seq[string]): string =
   var outputs = newSeq[string]()
-  const Prefix = "shlibs:Depends=".len
+  const Prefix = "shlibs:Depends="
+  const PrefixLen = Prefix.len
   for file in exes:
     let cmd = fmt"dpkg-shlibdeps -e{file} -O"
     debugEcho cmd
@@ -27,7 +28,10 @@ proc collectDeps*(exes:seq[string]): string =
       quit(output)
     else:
       debugEcho output
-      outputs.add output.substr(Prefix).strip()
+      for line in output.splitLines:
+        # ignore warning: package could avoid a useless dependency
+        if Prefix in line:
+          outputs.add line.substr(PrefixLen).strip()
   result = outputs.join(",")
 
 proc getDirectorySize*(directory: string): int =
