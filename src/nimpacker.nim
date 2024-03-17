@@ -409,12 +409,12 @@ proc pack(target: string, icon = "logo.png",
       postScript(post_build, target, release)
       packWindows(release, icoPath, metaInfo)
     of "linux":
-      if format == "":
+      if format == "" or format == "deb":
         let appDir = getAppDir("linux", release)
         removeDir(appDir)
-        buildLinux(icon, release, format, flags)
+        buildLinux(icon, release, "deb", flags)
         createDebianTree(appDir)
-        postScript(post_build, target, release, format = format)
+        postScript(post_build, target, release, format = "deb")
         packLinux(release, icon)
       elif format == "appimage":
         let baseDir = getAppDir("linux", release)
