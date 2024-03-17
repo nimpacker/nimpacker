@@ -24,3 +24,4 @@ type MetaInfo* = ref object
   maintainer*: string # deb Maintainer
   homepage*: string # deb and exe Homepage
   linuxCategories*: seq[string]
+  linuxDepends*: seq[string]

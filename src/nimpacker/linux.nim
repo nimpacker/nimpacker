@@ -16,8 +16,7 @@ proc isBinaryProgram(fileName: string): bool =
 proc findExes*(baseDir: string): seq[string] =
   toSeq(walkDirRec(baseDir)).filterIt(it.isBinaryProgram)
 
-proc collectDeps*(exes:seq[string]): string =
-  var outputs = newSeq[string]()
+proc collectDeps*(exes:seq[string]): seq[string] =
   const Prefix = "shlibs:Depends="
   const PrefixLen = Prefix.len
   for file in exes:
@@ -31,8 +30,7 @@ proc collectDeps*(exes:seq[string]): string =
       for line in output.splitLines:
         # ignore warning: package could avoid a useless dependency
         if Prefix in line:
-          outputs.add line.substr(PrefixLen).strip()
-  result = outputs.join(",")
+          result.add line.substr(PrefixLen).strip()
 
 proc getDirectorySize*(directory: string): int =
   ## get directory size in bytes
@@ -55,9 +53,11 @@ proc getControlBasic*(pkgInfo: PackageInfo, metaInfo: MetaInfo): string =
   Maintainer: {metaInfo.maintainer}
   """.unindent
 
-proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: string, size: int): string =
+proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: seq[string], size: int): string =
   ## size in kb
   let arch = hostCPU
+  var deps = metaInfo.linuxDepends
+  deps.add(depends)
   result = fmt"""
   Source: {pkgInfo.name}
   Package: {pkgInfo.name}
@@ -66,7 +66,7 @@ proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: string, size
   Architecture: {arch}
   Maintainer: {metaInfo.maintainer}
   Installed-Size: {size}
-  Depends: {depends}
+  Depends: {deps.join(",")}
   """.unindent
 
 proc createLinuxTree*(baseDir: string) =

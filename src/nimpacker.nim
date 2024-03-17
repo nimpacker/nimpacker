@@ -325,10 +325,13 @@ proc packLinux(release:bool, icon: string) =
   debugEcho output
   quit(exitCode)
 
-proc postScript(post_build: string, target: string, release: bool, appDir = "") =
+proc postScript(post_build: string, target: string, release: bool, appDir = "", format = "") =
   if post_build.len > 0 and fileExists(post_build):
     let appDir = if appDir.len == 0: getAppDir(target, release) else: appDir
-    let cmd = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" {post_build}"""
+    var pre = fmt"""nim e --hints:off -d:APP_DIR="{appDir} """""
+    if format.len > 0:
+      pre.add fmt""" -d:APP_FORMAT="{format}" """
+    let cmd = pre & post_build
     let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
     debugEcho output
 
@@ -411,7 +414,7 @@ proc pack(target: string, icon = "logo.png",
         removeDir(appDir)
         buildLinux(icon, release, format, flags)
         createDebianTree(appDir)
-        postScript(post_build, target, release)
+        postScript(post_build, target, release, format = format)
         packLinux(release, icon)
       elif format == "appimage":
         let baseDir = getAppDir("linux", release)
@@ -420,7 +423,7 @@ proc pack(target: string, icon = "logo.png",
         removeDir(appDir)
         buildLinux(icon, release, format, flags)
         createAppImageTree(appDir)
-        postScript(post_build, target, release, appDir)
+        postScript(post_build, target, release, appDir, format= format)
         packAppImage(release, icon, metaInfo)
     else:
       discard
