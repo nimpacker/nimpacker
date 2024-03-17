@@ -328,10 +328,11 @@ proc packLinux(release:bool, icon: string) =
 proc postScript(post_build: string, target: string, release: bool, appDir = "", format = "") =
   if post_build.len > 0 and fileExists(post_build):
     let appDir = if appDir.len == 0: getAppDir(target, release) else: appDir
-    var pre = fmt"""nim e --hints:off -d:APP_DIR="{appDir} """""
+    var pre = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" """
     if format.len > 0:
       pre.add fmt""" -d:APP_FORMAT="{format}" """
     let cmd = pre & post_build
+    debugEcho cmd
     let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
     debugEcho output
 
