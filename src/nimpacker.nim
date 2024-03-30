@@ -370,6 +370,7 @@ proc packWindows(release:bool, icoPath: string, metaInfo: MetaInfo) =
   if appId.len == 0:
     quit(fmt"Variable `appId` in {DefaultMetaPath} SHOULD NOT be empty, The `appId` is a GUID used in Inno Setup to uniquely identify an application during the installation process.")
   let script = getInnoSetupScript(pkgInfo, appDir, icoPath, metaInfo)
+  # debugEcho script
   let tempDir = getTempDir()
   let issPath = tempDir / pkgInfo.name & ".iss"
   writeFile(issPath, script)

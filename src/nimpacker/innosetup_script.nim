@@ -25,15 +25,17 @@ proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string, met
   dict.setSectionKey("Setup", "AppUpdatesURL", "{#MyAppURL}", false)
   dict.setSectionKey("Setup", "DefaultDirName", "{autopf}\\{#MyAppName}", false)
   dict.setSectionKey("Setup", "DisableProgramGroupPage", "yes", false)
-  dict.setSectionKey("Setup", ";PrivilegesRequired", "lowest", false)
+  dict.setSectionKey("Setup", "PrivilegesRequired", $metaInfo.privilegesRequired, false)
   dict.setSectionKey("Setup", "OutputBaseFilename", fmt"{pkgInfo.name}-setup", false)
   dict.setSectionKey("Setup", "SetupIconFile", icoPath, false)
   dict.setSectionKey("Setup", "Compression", "lzma", false)
   dict.setSectionKey("Setup", "SolidCompression", "yes", false)
   dict.setSectionKey("Setup", "WizardStyle", "modern", false)
+  
+    
   let setup = $dict
 
-  let others = """
+  var others = """
     [Languages]
     Name: "english"; MessagesFile: "compiler:Default.isl"
 
@@ -48,8 +50,16 @@ proc getInnoSetupScript*(pkgInfo: PackageInfo, dir: string, icoPath: string, met
     Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
     [Run]
-    Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+    Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
 
     """ % [dir]
+  # if metaInfo.runAsAdmin:
+  #   # const tpl = """
+  #   # [Registry]
+  #   # Root: "HKLM"; Subkey: "SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; \
+  #   # ValueType: String; ValueName: "{app}\{#MyAppExeName}"; ValueData: "RUNASADMIN"; \
+  #   # Flags: uninsdeletekeyifempty uninsdeletevalue; MinVersion: 0,6.1
+  #   # """
+  #   others.add tpl
   result = defines.unindent & setup & others.unindent
 

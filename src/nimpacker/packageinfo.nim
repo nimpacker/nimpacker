@@ -17,6 +17,10 @@ type DocumentType* = ref object
   role*: DocumentTypeRole
   utis*: seq[string]
 
+type PrivilegesRequired* = enum
+  admin = "admin"
+  lowest = "lowest"
+
 type MetaInfo* = ref object
   productName*: string
   appId*: string
@@ -25,3 +29,5 @@ type MetaInfo* = ref object
   homepage*: string # deb and exe Homepage
   linuxCategories*: seq[string]
   linuxDepends*: seq[string]
+  privilegesRequired*: PrivilegesRequired
+  runAsAdmin*: bool

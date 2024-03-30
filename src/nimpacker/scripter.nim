@@ -4,6 +4,7 @@ import ./packageinfo
 
 exportTo(myImpl, DocumentTypeRole)
 exportTo(myImpl, DocumentType)
+exportTo(myImpl, PrivilegesRequired)
 addVariable(myImpl, productName, string)
 addVariable(myImpl, appId, string)
 addVariable(myImpl, fileAssociations, seq[DocumentType])
@@ -11,6 +12,8 @@ addVariable(myImpl, maintainer, string)
 addVariable(myImpl, homepage, string)
 addVariable(myImpl, linuxCategories, seq[string])
 addVariable(myImpl, linuxDepends, seq[string])
+addVariable(myImpl, runAsAdmin, bool)
+addVariable(myImpl, privilegesRequired, PrivilegesRequired)
 # exportTo(myImpl, webby.QueryParams)
 # exportTo(myImpl, webby.Url)
 exportTo(myImpl, webby.HttpHeaders)
@@ -76,6 +79,8 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     let homepage = intr.getGlobalVariable[:string]("homepage")
     let linuxCategories = intr.getGlobalVariable[:seq[string]]("linuxCategories")
     let linuxDepends = intr.getGlobalVariable[:seq[string]]("linuxDepends")
+    let runAsAdmin = intr.getGlobalVariable[:bool]("runAsAdmin")
+    let privilegesRequired = intr.getGlobalVariable[:PrivilegesRequired]("privilegesRequired")
     result.productName = productName
     result.appId = appId
     result.fileAssociations = fileAssociations
@@ -83,6 +88,8 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     result.homepage = homepage
     result.linuxCategories = linuxCategories
     result.linuxDepends = linuxDepends
+    result.runAsAdmin = runAsAdmin
+    result.privilegesRequired= privilegesRequired
 
 proc exec*(path: string) =
   if fileExists(path):
