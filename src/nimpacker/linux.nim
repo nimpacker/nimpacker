@@ -2,6 +2,10 @@ import std/[os, strformat, strutils, osproc, sequtils]
 import ./packageinfo
 import parseini
 
+const Perm755 = {fpUserExec, fpUserWrite, fpUserRead, 
+                          fpGroupExec, fpGroupRead, 
+                          fpOthersExec, fpOthersRead}
+
 proc isExecutable(path: string): bool =
   let p = getFilePermissions(path)
   result = fpUserExec in p and fpGroupExec in p and fpOthersExec in p
@@ -86,6 +90,7 @@ proc createLinuxTree*(baseDir: string) =
 
 proc createDebianTree*(baseDir: string) =
   createDir(baseDir / "debian")
+  setFilePermissions(baseDir / "debian", Perm755)
   # debian/control
   createLinuxTree(baseDir)
 
