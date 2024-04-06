@@ -12,7 +12,7 @@ import rcedit
 include nimpacker/packageinfo_schema
 include nimpacker/cocoaappinfo
 import nimpacker/[packageinfo, scripter]
-import nimpacker/[innosetup_script, linux, macos, appimage]
+import nimpacker/[innosetup_script, linux, macos, appimage, windows]
 
 when NimMajor >= 2:
   import checksums/md5
@@ -171,7 +171,7 @@ proc getAppDir(target: string, release: bool): string =
   if target == "macos":
     result = result / pkgInfo.name & ".app"
 
-proc buildWindows(app_logo: string, release = false, flags: seq[string]): string {.discardable.} =
+proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: seq[string]): string {.discardable.} =
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "windows"
@@ -206,7 +206,13 @@ proc buildWindows(app_logo: string, release = false, flags: seq[string]): string
     debugEcho o
     let exePath = pwd / pkgInfo.name & ".exe"
     if icoPath.len > 0 and fileExists(icoPath):
-      rcedit(none(string), exePath, {"icon": icoPath}.toTable())
+      var options = {"icon": icoPath}.toTable()
+      if metaInfo.runAsAdmin:
+        let tempDir = getTempDir()
+        let path = tempDir / pkgInfo.name & ".mainifest"
+        writeFile(path, AppMainifest)
+        options["application-manifest"] = path
+      rcedit(none(string), exePath, options)
     moveFile(exePath, appDir / pkgInfo.name & ".exe")
   else:
     debugEcho o
@@ -344,7 +350,7 @@ proc build(target: string, icon = "logo.png",
     of "macos":
       buildMacos(icon, release, metaInfo, flags)
     of "windows":
-      buildWindows(icon, release, flags)
+      buildWindows(icon, release, metaInfo, flags)
     of "linux":
       buildLinux(icon, release, "deb", flags)
     else:
@@ -407,7 +413,7 @@ proc pack(target: string, icon = "logo.png",
       postScript(post_build, target, release)
       packMacos(release, metaInfo)
     of "windows":
-      let icoPath = buildWindows(icon, release, flags)
+      let icoPath = buildWindows(icon, release, metaInfo, flags)
       postScript(post_build, target, release)
       packWindows(release, icoPath, metaInfo)
     of "linux":
