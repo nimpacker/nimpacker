@@ -21,6 +21,11 @@ type PrivilegesRequired* = enum
   admin = "admin"
   lowest = "lowest"
 
+type ExecutionLevel* = enum
+  asInvoker = "asInvoker"
+  requireAdministrator = "requireAdministrator"
+  highestAvailable = "highestAvailable"
+
 type MetaInfo* = ref object
   productName*: string
   appId*: string
@@ -31,3 +36,4 @@ type MetaInfo* = ref object
   linuxDepends*: seq[string]
   privilegesRequired*: PrivilegesRequired
   runAsAdmin*: bool
+  executionLevel*: ExecutionLevel

@@ -210,7 +210,8 @@ proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: 
       if metaInfo.runAsAdmin:
         let tempDir = getTempDir()
         let path = tempDir / pkgInfo.name & ".mainifest"
-        writeFile(path, AppMainifest)
+        let xml = createAppMainifest(metaInfo.executionLevel, false)
+        writeFile(path, xmlHeader & $xml)
         options["application-manifest"] = path
       rcedit(none(string), exePath, options)
     moveFile(exePath, appDir / pkgInfo.name & ".exe")

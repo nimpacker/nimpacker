@@ -1,12 +1,23 @@
-const AppMainifest* = """
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-        <security>
-            <requestedPrivileges>
-                <requestedExecutionLevel level="requireAdministrator" uiAccess="false"/>
-            </requestedPrivileges>
-        </security>
-    </trustInfo>
-</assembly>
-"""
+import std/xmltree
+export xmltree
+
+import ./packageinfo
+
+proc createAppMainifest*(execLevel: ExecutionLevel, uiAccess: bool): XmlNode =
+  var assembly = newElement("assembly")
+  assembly.attrs = {"xmlns": "urn:schemas-microsoft-com:asm.v1", "manifestVersion": "1.0"}.toXmlAttributes
+  var trustInfo = newElement("trustInfo")
+  var security = newElement("security")
+  var requestedPrivileges = newElement("requestedPrivileges")
+  var requestedExecutionLevel = newElement("requestedExecutionLevel")
+  requestedExecutionLevel.attrs = {"level": $execLevel, "uiAccess": $uiAccess }.toXmlAttributes
+
+  requestedPrivileges.add requestedExecutionLevel
+  security.add requestedPrivileges
+  trustInfo.add security
+  assembly.add trustInfo
+  assembly
+
+when isMainModule:
+  let xml = createAppMainifest(ExecutionLevel.requireAdministrator, false)
+  echo $xml
