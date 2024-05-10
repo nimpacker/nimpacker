@@ -332,10 +332,10 @@ proc packLinux(release:bool, icon: string) =
   debugEcho output
   quit(exitCode)
 
-proc postScript(post_build: string, target: string, release: bool, appDir = "", format = "") =
+proc postScript(post_build: string, target: string, release: bool, flags:seq[string], appDir = "", format = "") =
   if post_build.len > 0 and fileExists(post_build):
     let appDir = if appDir.len == 0: getAppDir(target, release) else: appDir
-    var pre = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" """
+    var pre = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" {flags.join(" ")} """
     if format.len > 0:
       pre.add fmt""" -d:APP_FORMAT="{format}" """
     let cmd = pre & post_build
@@ -357,7 +357,7 @@ proc build(target: string, icon = "logo.png",
     else:
       discard
 
-  postScript(post_build, target, release)
+  postScript(post_build, target, release, flags)
 
 proc run(target: string, release = false, flags: seq[string]): int =
   case target:
@@ -411,11 +411,11 @@ proc pack(target: string, icon = "logo.png",
   case target:
     of "macos":
       buildMacos(icon, release, metaInfo, flags)
-      postScript(post_build, target, release)
+      postScript(post_build, target, release, flags)
       packMacos(release, metaInfo)
     of "windows":
       let icoPath = buildWindows(icon, release, metaInfo, flags)
-      postScript(post_build, target, release)
+      postScript(post_build, target, release, flags)
       packWindows(release, icoPath, metaInfo)
     of "linux":
       if format == "" or format == "deb":
@@ -423,7 +423,7 @@ proc pack(target: string, icon = "logo.png",
         removeDir(appDir)
         buildLinux(icon, release, "deb", flags)
         createDebianTree(appDir)
-        postScript(post_build, target, release, format = "deb")
+        postScript(post_build, target, release, flags, format = "deb")
         packLinux(release, icon)
       elif format == "appimage":
         let baseDir = getAppDir("linux", release)
@@ -432,7 +432,7 @@ proc pack(target: string, icon = "logo.png",
         removeDir(appDir)
         buildLinux(icon, release, format, flags)
         createAppImageTree(appDir)
-        postScript(post_build, target, release, appDir, format= format)
+        postScript(post_build, target, release, flags, appDir, format= format)
         packAppImage(release, icon, metaInfo)
     else:
       discard
