@@ -4,7 +4,9 @@ import ./packageinfo
 proc getCreateDmg*(pkgInfo: PackageInfo, metaInfo: MetaInfo, appDir: string):string =
   let productName = metaInfo.productName
   let name = if productName.len > 0: productName else: pkgInfo.name
-  let outputPath = fmt"dist/{name}-Installer.dmg"
+  let dir = "dist"
+  createDir(dir)
+  let outputPath = dir / fmt"{name}-Installer.dmg"
   if fileExists(outputPath):
     removeFile(outputPath)
   result = fmt"""
