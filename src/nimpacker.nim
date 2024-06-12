@@ -1,4 +1,4 @@
-import std/[os, json, tables, osproc, strutils, sequtils, strformat, oids, options, distros]
+import std/[os, json, tables, osproc, strutils, sequtils, strformat, oids, options, distros, parseopt]
 import cligen
 import plists
 import icon
@@ -30,6 +30,18 @@ proc getPkgInfo(): PackageInfo =
   let r = execCmdEx("nimble dump --json --silent " & getCurrentDir())
   let jsonNode = parseJson(r.output)
   result = to(jsonNode, PackageInfo)
+
+proc getArch(flags: seq[string]): string = 
+  for kind, key, val in getopt(flags):
+    case kind
+    of cmdArgument:
+      discard
+    of cmdLongOption, cmdShortOption:
+      case key
+      of "cpu": return val
+      else: discard
+    of cmdEnd: assert(false) # cannot happen
+  result = hostCPU
 
 proc baseCmd(base: seq[string], release: bool, flags: seq[
     string]): seq[string] =
@@ -396,10 +408,10 @@ proc packWindows(release:bool, icoPath: string, metaInfo: MetaInfo) =
   if not found:
     debugEcho output
 
-proc packMacos(release:bool, metaInfo: MetaInfo) =
+proc packMacos(release:bool, metaInfo: MetaInfo, arch: string) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("macos", release)
-  let cmd = getCreateDmg(pkgInfo, metaInfo, appDir)
+  let cmd = getCreateDmg(pkgInfo, metaInfo, appDir, arch)
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
   debugEcho output
@@ -407,12 +419,13 @@ proc packMacos(release:bool, metaInfo: MetaInfo) =
 proc pack(target: string, icon = "logo.png",
     post_build =  "nimpacker" / "post_build.nims",
     release = false, format = "", flags: seq[string]): int =
+  let arch = getArch(flags)
   let metaInfo = getMetaInfo()
   case target:
     of "macos":
       buildMacos(icon, release, metaInfo, flags)
       postScript(post_build, target, release, flags)
-      packMacos(release, metaInfo)
+      packMacos(release, metaInfo, arch)
     of "windows":
       let icoPath = buildWindows(icon, release, metaInfo, flags)
       postScript(post_build, target, release, flags)
