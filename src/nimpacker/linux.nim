@@ -6,10 +6,6 @@ const Perm755 = {fpUserExec, fpUserWrite, fpUserRead,
                           fpGroupExec, fpGroupRead, 
                           fpOthersExec, fpOthersRead}
 
-proc isExecutable(path: string): bool =
-  let p = getFilePermissions(path)
-  result = fpUserExec in p and fpGroupExec in p and fpOthersExec in p
-
 proc isBinaryProgram(fileName: string): bool =
   var file = open(fileName, fmRead)
   var magicNumber: array[4, uint8]
