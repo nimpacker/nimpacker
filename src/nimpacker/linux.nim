@@ -46,7 +46,7 @@ proc getDirectorySize*(directory: string): int =
   return totalSize
 
 proc getControlBasic*(pkgInfo: PackageInfo, metaInfo: MetaInfo): string =
-  ## size in kb
+  ## Debian control file basic content, see https://www.debian.org/doc/debian-policy/ch-controlfields.html
   let arch = hostCPU
   result = fmt"""
   Source: {pkgInfo.name}
@@ -58,7 +58,8 @@ proc getControlBasic*(pkgInfo: PackageInfo, metaInfo: MetaInfo): string =
   """.unindent
 
 proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: seq[string], size: int): string =
-  ## size in kb
+  ## Debian control file content, see https://www.debian.org/doc/debian-policy/ch-controlfields.html
+  ## installed size in kb
   let arch = hostCPU
   var deps = metaInfo.linuxDepends
   deps.add(depends)
