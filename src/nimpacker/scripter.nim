@@ -17,16 +17,8 @@ addVariable(myImpl, linuxDepends, seq[string])
 addVariable(myImpl, runAsAdmin, bool)
 addVariable(myImpl, privilegesRequired, PrivilegesRequired)
 addVariable(myImpl, executionLevel, ExecutionLevel)
-# exportTo(myImpl, webby.QueryParams)
-# exportTo(myImpl, webby.Url)
 exportTo(myImpl, webby.HttpHeaders)
-# exportTo(myImpl, webby.toWebby)
-# exportTo(myImpl, webby.toBase)
-
-# exportTo(myImpl, puppy.Request)
 exportTo(myImpl, puppy.Response)
-# exportTo(myImpl, puppy.PuppyError)
-# exportTo(myImpl, puppy.Header)
 
 proc writeFile(name, content: string) =
   syncio.writeFile(name, content)
