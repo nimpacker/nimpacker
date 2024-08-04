@@ -204,11 +204,6 @@ proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: 
     myflags.add "-d:mingw"
   var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release,
       myflags.concat flags)
-  # for windres
-  # if logoExists:
-  #   let (output, exitCode, resPath) = callWindres(icoPath)
-  #   discard cmd.concat @[&"--passL:{resPath}"]
-  #   debugEcho output
 
   let finalCMD = cmd.join(" ")
   debugEcho finalCMD
