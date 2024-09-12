@@ -95,7 +95,16 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
       CFBundleTypeRole = some($it.role)
     )
   )
-
+  let exportedTypeDeclarations = metaInfo.exportedTypeDeclarations.mapIt(
+    create(
+      UTExportedTypeDeclaration,
+      UTTypeIdentifier = some(it.identifier),
+      UTTypeTagSpecification = some(create(UTTypeTagSpecification,
+        "public.filename-extension" = some(it.tagSpec.exts),
+        "public.mime-type" = some(it.tagSpec.mime)
+      ))
+    )
+  )
   let productName = metaInfo.productName
   let displayName = if productName.len > 0: productName else: pkgInfo.name 
 
@@ -111,7 +120,9 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
     CFBundleIdentifier = none(string),
     NSAppTransportSecurity = sec,
     CFBundleIconName = none(string),
-    CFBundleDocumentTypes = dt
+    CFBundleDocumentTypes = dt,
+    UTExportedTypeDeclarations = if len(exportedTypeDeclarations) > 0: 
+      some(exportedTypeDeclarations) else: none(seq[UTExportedTypeDeclaration])
     )
   var plist = appInfo.JsonNode
 

@@ -24,6 +24,17 @@ jsonSchema:
     LSItemContentTypes?:string[] # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/TP40009249-SW7
     # Editor, Viewer, Shell, or None
     CFBundleTypeRole?:string
+  UTTypeTagSpecification:
+    "public.filename-extension": string[]
+    "public.mime-type": string
+  # https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/understanding_utis/understand_utis_declare/understand_utis_declare.html
+  UTExportedTypeDeclaration:
+    UTTypeIdentifier: string
+    UTTypeReferenceURL ?: string
+    UTTypeDescription ?: string
+    UTTypeIconFile ?: string
+    UTTypeConformsTo ?: string[]
+    UTTypeTagSpecification: UTTypeTagSpecification
   CocoaAppInfo:
     CFBundleDisplayName: string
     CFBundleVersion: string
@@ -34,3 +45,4 @@ jsonSchema:
     NSHighResolutionCapable ?: bool
     CFBundleIconName ?: string
     CFBundleDocumentTypes ?: DocumentType[]
+    UTExportedTypeDeclarations ?: UTExportedTypeDeclaration[]

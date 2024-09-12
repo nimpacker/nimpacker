@@ -6,10 +6,13 @@ exportTo(myImpl, DocumentTypeRole)
 exportTo(myImpl, DocumentType)
 exportTo(myImpl, PrivilegesRequired)
 exportTo(myImpl, ExecutionLevel)
+exportTo(myImpl, TagSpec)
+exportTo(myImpl, ExportedTypeDeclaration)
 
 addVariable(myImpl, productName, string)
 addVariable(myImpl, appId, string)
 addVariable(myImpl, fileAssociations, seq[DocumentType])
+addVariable(myImpl, exportedTypeDeclarations, seq[ExportedTypeDeclaration])
 addVariable(myImpl, maintainer, string)
 addVariable(myImpl, homepage, string)
 addVariable(myImpl, linuxCategories, seq[string])
@@ -69,6 +72,7 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     let productName = intr.getGlobalVariable[:string]("productName")
     let appId = intr.getGlobalVariable[:string]("appId")
     let fileAssociations = intr.getGlobalVariable[:seq[DocumentType]]("fileAssociations")
+    let exportedTypeDeclarations = intr.getGlobalVariable[:seq[ExportedTypeDeclaration]]("exportedTypeDeclarations")
     var maintainer = intr.getGlobalVariable[:string]("maintainer")
     if maintainer.len == 0: maintainer = "YOUR NAME <EMAIL>"
     let homepage = intr.getGlobalVariable[:string]("homepage")
@@ -80,6 +84,7 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     result.productName = productName
     result.appId = appId
     result.fileAssociations = fileAssociations
+    result.exportedTypeDeclarations = exportedTypeDeclarations
     result.maintainer = maintainer
     result.homepage = homepage
     result.linuxCategories = linuxCategories

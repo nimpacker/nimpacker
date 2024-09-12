@@ -17,6 +17,18 @@ type DocumentType* = ref object
   role*: DocumentTypeRole
   utis*: seq[string]
 
+type TagSpec* = ref object
+  mime*: string
+  exts*: seq[string]
+
+type ExportedTypeDeclaration* = ref object
+  identifier*: string
+  referenceURL*: string
+  description*: string
+  iconFIle*: string
+  conformsTo*: seq[string]
+  tagSpec*: TagSpec
+
 type PrivilegesRequired* = enum
   admin = "admin"
   lowest = "lowest"
@@ -37,3 +49,4 @@ type MetaInfo* = ref object
   privilegesRequired*: PrivilegesRequired
   runAsAdmin*: bool
   executionLevel*: ExecutionLevel
+  exportedTypeDeclarations*: seq[ExportedTypeDeclaration]
