@@ -34,7 +34,7 @@ jsonSchema:
     UTTypeDescription ?: string
     UTTypeIconFile ?: string
     UTTypeConformsTo ?: string[]
-    UTTypeTagSpecification: UTTypeTagSpecification
+    UTTypeTagSpecification: any
   CocoaAppInfo:
     CFBundleDisplayName: string
     CFBundleVersion: string

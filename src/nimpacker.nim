@@ -98,11 +98,17 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
   let exportedTypeDeclarations = metaInfo.exportedTypeDeclarations.mapIt(
     create(
       UTExportedTypeDeclaration,
-      UTTypeIdentifier = some(it.identifier),
-      UTTypeTagSpecification = some(create(UTTypeTagSpecification,
-        "public.filename-extension" = some(it.tagSpec.exts),
-        "public.mime-type" = some(it.tagSpec.mime)
-      ))
+      UTTypeIdentifier = it.identifier,
+      UTTypeReferenceURL = none(string),
+      UTTypeDescription = none(string),
+      UTTypeIconFile = none(string),
+      UTTypeConformsTo = none(seq[string]),
+      # UTTypeTagSpecification = some(create(UTTypeTagSpecification,
+      #   "public.filename-extension" = some(it.tagSpec.exts),
+      #   "public.mime-type" = some(it.tagSpec.mime)
+      # ))
+      UTTypeTagSpecification = %* ({"public.filename-extension": it.tagSpec.exts,
+        "public.mime-type": it.tagSpec.mime})
     )
   )
   let productName = metaInfo.productName
