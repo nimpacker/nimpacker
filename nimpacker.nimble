@@ -26,7 +26,7 @@ requires "puppy"
 requires "yaml"
 
 when NimMajor >= 2:
-  requires "checksums"
+  requires "checksums >= 0.2.1"
 
 if detectOs(Windows):
   foreignDep "InnoSetup"
