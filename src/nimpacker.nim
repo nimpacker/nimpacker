@@ -92,7 +92,8 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
       CFBundleTypeExtensions = some(it.exts),
       CFBundleTypeMIMETypes = some(it.mimes),
       LSItemContentTypes = some(it.utis),
-      CFBundleTypeRole = some($it.role)
+      CFBundleTypeRole = some($it.role),
+      LSHandlerRank = if it.rank != default(typeOf it.rank): some($it.rank) else: none(string)
     )
   )
   let exportedTypeDeclarations = metaInfo.exportedTypeDeclarations.mapIt(

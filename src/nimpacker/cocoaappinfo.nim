@@ -24,6 +24,7 @@ jsonSchema:
     LSItemContentTypes?:string[] # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/TP40009249-SW7
     # Editor, Viewer, Shell, or None
     CFBundleTypeRole?:string
+    LSHandlerRank?: string
   UTTypeTagSpecification:
     "public.filename-extension": string[]
     "public.mime-type": string

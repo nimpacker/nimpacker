@@ -3,6 +3,7 @@ import nimscripter, nimscripter/[variables, vmops], puppy, webby
 import ./packageinfo
 
 exportTo(myImpl, DocumentTypeRole)
+exportTo(myImpl, HandlerRank)
 exportTo(myImpl, DocumentType)
 exportTo(myImpl, PrivilegesRequired)
 exportTo(myImpl, ExecutionLevel)

@@ -11,10 +11,17 @@ type DocumentTypeRole* = enum
   Viewer = "Viewer"
   Shell = "Shell"
 
+type HandlerRank* = enum
+  Default = "Default"
+  Owner = "Owner"
+  Alternate = "Alternate"
+  None = "None"
+
 type DocumentType* = ref object
   exts*: seq[string]
   mimes*: seq[string]
   role*: DocumentTypeRole
+  rank*: HandlerRank
   utis*: seq[string]
 
 type TagSpec* = ref object
