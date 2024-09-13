@@ -102,7 +102,7 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
       UTTypeReferenceURL = none(string),
       UTTypeDescription = none(string),
       UTTypeIconFile = none(string),
-      UTTypeConformsTo = none(seq[string]),
+      UTTypeConformsTo = if it.conformsTo.len > 0: some(it.conformsTo) else: none(seq[string]),
       # UTTypeTagSpecification = some(create(UTTypeTagSpecification,
       #   "public.filename-extension" = some(it.tagSpec.exts),
       #   "public.mime-type" = some(it.tagSpec.mime)
