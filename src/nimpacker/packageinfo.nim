@@ -18,11 +18,13 @@ type HandlerRank* = enum
   None = "None"
 
 type DocumentType* = ref object
+  name*: string
   exts*: seq[string]
   mimes*: seq[string]
   role*: DocumentTypeRole
   rank*: HandlerRank
   utis*: seq[string]
+  iconFile*: string
 
 type TagSpec* = ref object
   # mime*: string
@@ -32,7 +34,7 @@ type ExportedTypeDeclaration* = ref object
   identifier*: string
   referenceURL*: string
   description*: string
-  iconFIle*: string
+  iconFile*: string
   conformsTo*: seq[string]
   tagSpec*: TagSpec
 

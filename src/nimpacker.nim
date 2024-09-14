@@ -89,11 +89,13 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
   )
   let documentTypes = metaInfo.fileAssociations.mapIt(
     create(DocumentType,
+      CFBundleTypeName = it.name,
       CFBundleTypeExtensions = some(it.exts),
       CFBundleTypeMIMETypes = some(it.mimes),
       LSItemContentTypes = some(it.utis),
       CFBundleTypeRole = some($it.role),
-      LSHandlerRank = if it.rank != default(typeOf it.rank): some($it.rank) else: none(string)
+      LSHandlerRank = if it.rank != default(typeOf it.rank): some($it.rank) else: none(string),
+      CFBundleTypeIconFile = if it.iconFile.len > 0: some(it.iconFile) else: none(string),
     )
   )
   let exportedTypeDeclarations = metaInfo.exportedTypeDeclarations.mapIt(

@@ -17,6 +17,7 @@ jsonSchema:
     NSAllowsLocalNetworking?:bool
     NSExceptionDomains ?: any
   DocumentType:
+    CFBundleTypeName: string
     # Deprecated in OS X v10.5
     CFBundleTypeExtensions?:string[]
     # Deprecated in OS X v10.5
@@ -25,6 +26,7 @@ jsonSchema:
     # Editor, Viewer, Shell, or None
     CFBundleTypeRole?:string
     LSHandlerRank?: string
+    CFBundleTypeIconFile?: string
   # https://developer.apple.com/documentation/uniformtypeidentifiers/defining-file-and-data-types-for-your-app?language=objc
   UTTypeTagSpecification:
     "public.filename-extension": string[]

@@ -3,6 +3,7 @@ productName = "NimPacker"
 
 fileAssociations = @[
     DocumentType(
+        name: "Spreadsheet",
         exts: @["xlsx", "xls"], 
         mimes: @[
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
