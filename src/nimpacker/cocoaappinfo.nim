@@ -25,9 +25,10 @@ jsonSchema:
     # Editor, Viewer, Shell, or None
     CFBundleTypeRole?:string
     LSHandlerRank?: string
+  # https://developer.apple.com/documentation/uniformtypeidentifiers/defining-file-and-data-types-for-your-app?language=objc
   UTTypeTagSpecification:
     "public.filename-extension": string[]
-    "public.mime-type": string
+    # "public.mime-type": string
   # https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/understanding_utis/understand_utis_declare/understand_utis_declare.html
   UTExportedTypeDeclaration:
     UTTypeIdentifier: string

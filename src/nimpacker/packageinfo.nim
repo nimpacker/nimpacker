@@ -25,7 +25,7 @@ type DocumentType* = ref object
   utis*: seq[string]
 
 type TagSpec* = ref object
-  mime*: string
+  # mime*: string
   exts*: seq[string]
 
 type ExportedTypeDeclaration* = ref object
