@@ -78,7 +78,9 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
     createDir(buildDir)
   let subDir = if release: "Release" else: "Debug"
   removeDir(buildDir)
-  let appDir = buildDir / subDir / pkgInfo.name & ".app"
+  let productName = metaInfo.productName
+  let displayName = if productName.len > 0: productName else: pkgInfo.name 
+  let appDir = buildDir / subDir / displayName & ".app"
   createDir(appDir)
   let nSAppTransportSecurityJson = create(NSAppTransportSecurity,
     NSAllowsArbitraryLoads = some(true),
@@ -116,8 +118,7 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
         })
     )
   )
-  let productName = metaInfo.productName
-  let displayName = if productName.len > 0: productName else: pkgInfo.name 
+  
 
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
   # let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
@@ -196,14 +197,15 @@ proc runLinux(release = false, flags: seq[string]) =
   let (output, exitCode) = execCmdEx(finalCMD)
   debugEcho output
 
-proc getAppDir(target: string, release: bool): string =
+proc getAppDir(target: string, release: bool, name = ""): string =
   let pkgInfo = getPkgInfo()
   let pwd = getCurrentDir()
   let buildDir = pwd / "build" / target
   let subDir = if release: "Release" else: "Debug"
   result = buildDir / subDir
   if target == "macos":
-    result = result / pkgInfo.name & ".app"
+    let resName = if name.len > 0: name else: pkgInfo.name
+    result = result / resName & ".app"
 
 proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: seq[string]): string {.discardable.} =
   let pwd: string = getCurrentDir()
@@ -359,9 +361,8 @@ proc packLinux(release:bool, icon: string) =
   debugEcho output
   quit(exitCode)
 
-proc postScript(post_build: string, target: string, release: bool, flags:seq[string], appDir = "", format = "") =
+proc postScript(post_build: string, target: string, release: bool, flags:seq[string], appDir:string, format = "") =
   if post_build.len > 0 and fileExists(post_build):
-    let appDir = if appDir.len == 0: getAppDir(target, release) else: appDir
     var pre = fmt"""nim e --hints:off -d:APP_DIR="{appDir}" {flags.join(" ")} """
     if format.len > 0:
       pre.add fmt""" -d:APP_FORMAT="{format}" """
@@ -383,8 +384,11 @@ proc build(target: string, icon = "logo.png",
       buildLinux(icon, release, "deb", flags)
     else:
       discard
-
-  postScript(post_build, target, release, flags)
+  let pkgInfo = getPkgInfo()
+  let productName = metaInfo.productName
+  let name = if productName.len > 0: productName else: pkgInfo.name
+  let appDir = getAppDir(target, release, name)
+  postScript(post_build, target, release, flags, appDir)
 
 proc run(target: string, release = false, flags: seq[string]): int =
   case target:
@@ -424,7 +428,9 @@ proc packWindows(release:bool, icoPath: string, metaInfo: MetaInfo) =
 
 proc packMacos(release:bool, metaInfo: MetaInfo, arch: string) =
   let pkgInfo = getPkgInfo()
-  let appDir = getAppDir("macos", release)
+  let productName = metaInfo.productName
+  let name = if productName.len > 0: productName else: pkgInfo.name
+  let appDir = getAppDir("macos", release,name)
   let cmd = getCreateDmg(pkgInfo, metaInfo, appDir, arch)
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
@@ -435,14 +441,18 @@ proc pack(target: string, icon = "logo.png",
     release = false, format = "", flags: seq[string]): int =
   let arch = getArch(flags)
   let metaInfo = getMetaInfo()
+  let pkgInfo = getPkgInfo()
+  let productName = metaInfo.productName
+  let name = if productName.len > 0: productName else: pkgInfo.name
+  let appDir = getAppDir(target, release,name)
   case target:
     of "macos":
       buildMacos(icon, release, metaInfo, flags)
-      postScript(post_build, target, release, flags)
+      postScript(post_build, target, release, flags, appDir)
       packMacos(release, metaInfo, arch)
     of "windows":
       let icoPath = buildWindows(icon, release, metaInfo, flags)
-      postScript(post_build, target, release, flags)
+      postScript(post_build, target, release, flags, appDir)
       packWindows(release, icoPath, metaInfo)
     of "linux":
       if format == "" or format == "deb":
@@ -450,7 +460,7 @@ proc pack(target: string, icon = "logo.png",
         removeDir(appDir)
         buildLinux(icon, release, "deb", flags)
         createDebianTree(appDir)
-        postScript(post_build, target, release, flags, format = "deb")
+        postScript(post_build, target, release, flags, appDir, format = "deb")
         packLinux(release, icon)
       elif format == "appimage":
         let baseDir = getAppDir("linux", release)
