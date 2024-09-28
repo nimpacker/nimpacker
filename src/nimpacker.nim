@@ -128,6 +128,7 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
     CFBundlePackageType = some("APPL"),
     CFBundleExecutable = pkgInfo.name,
     CFBundleDisplayName = displayName,
+    CFBundleName = some(displayName), # affect menu bar title especially exectuable name diffrent.
     CFBundleVersion = pkgInfo.version,
     CFBundleIdentifier = none(string),
     NSAppTransportSecurity = sec,

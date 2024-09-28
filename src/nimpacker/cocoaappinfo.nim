@@ -41,6 +41,7 @@ jsonSchema:
     UTTypeTagSpecification: any
   CocoaAppInfo:
     CFBundleDisplayName: string
+    CFBundleName ?: string
     CFBundleVersion: string
     CFBundleExecutable: string
     CFBundleIdentifier?:string
