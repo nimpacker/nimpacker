@@ -50,6 +50,7 @@ type ExecutionLevel* = enum
 type MetaInfo* = ref object
   productName*: string
   appId*: string
+  bundleIdentifier*: string
   fileAssociations*: seq[DocumentType]
   maintainer*: string # deb Maintainer
   homepage*: string # deb and exe Homepage

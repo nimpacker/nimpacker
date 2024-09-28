@@ -12,6 +12,7 @@ exportTo(myImpl, ExportedTypeDeclaration)
 
 addVariable(myImpl, productName, string)
 addVariable(myImpl, appId, string)
+addVariable(myImpl, bundleIdentifier, string)
 addVariable(myImpl, fileAssociations, seq[DocumentType])
 addVariable(myImpl, exportedTypeDeclarations, seq[ExportedTypeDeclaration])
 addVariable(myImpl, maintainer, string)
@@ -72,6 +73,7 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     let intr = loadScript(ourScript, scriptProcs)
     let productName = intr.getGlobalVariable[:string]("productName")
     let appId = intr.getGlobalVariable[:string]("appId")
+    let bundleIdentifier = intr.getGlobalVariable[:string]("bundleIdentifier")
     let fileAssociations = intr.getGlobalVariable[:seq[DocumentType]]("fileAssociations")
     let exportedTypeDeclarations = intr.getGlobalVariable[:seq[ExportedTypeDeclaration]]("exportedTypeDeclarations")
     var maintainer = intr.getGlobalVariable[:string]("maintainer")
@@ -84,6 +86,7 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     let executionLevel = intr.getGlobalVariable[:ExecutionLevel]("executionLevel")
     result.productName = productName
     result.appId = appId
+    result.bundleIdentifier = bundleIdentifier
     result.fileAssociations = fileAssociations
     result.exportedTypeDeclarations = exportedTypeDeclarations
     result.maintainer = maintainer
