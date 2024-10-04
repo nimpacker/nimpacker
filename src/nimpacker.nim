@@ -50,6 +50,16 @@ proc baseCmd(base: seq[string], release: bool, flags: seq[
   let opts = if not release: DEBUG_OPTS else: RELEASE_OPTS
   result.add opts
 
+proc getAppDir(target: string, release: bool, name = ""): string =
+  let pkgInfo = getPkgInfo()
+  let pwd = getCurrentDir()
+  let buildDir = pwd / "build" / target
+  let subDir = if release: "Release" else: "Debug"
+  result = buildDir / subDir
+  if target == "macos":
+    let resName = if name.len > 0: name else: pkgInfo.name
+    result = result / resName & ".app"
+
 proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] =
   let tempDir = getTempDir()
   let id = $genOid()
@@ -70,7 +80,14 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     result = ImageInfo(size: size, filePath: optName)
   )
 
-proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(MetaInfo), flags: seq[string]) =
+proc actualBuildMacos(release = false, flags: seq[string]): (string, int) =
+  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release, flags)
+  let finalCMD = cmd.join(" ")
+  debugEcho finalCMD
+  result = execCmdEx(finalCMD, options = {poUsePath})
+
+proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = default(MetaInfo), flags: seq[string]) =
+  ## create MacOS .app package
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "macos"
@@ -161,18 +178,35 @@ proc buildMacos(app_logo: string, release = false, metaInfo: MetaInfo = default(
   if not dirExists(appDir / "Contents"):
     createDir(appDir / "Contents")
   writePlist(plist, appDir / "Contents" / "Info.plist")
-  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release, flags)
-  let finalCMD = cmd.join(" ")
-  debugEcho finalCMD
-  let (output, exitCode) = execCmdEx(finalCMD, options = {poUsePath})
-  if exitCode == 0:
-    debugEcho output
-    let binOutDir = appDir / "Contents" / "MacOS"
-    if not dirExists(binOutDir):
-      createDir(binOutDir)
-    moveFile(pwd / pkgInfo.name, binOutDir / pkgInfo.name)
-  else:
-    debugEcho output
+  let binOutDir = appDir / "Contents" / "MacOS"
+  if not dirExists(binOutDir):
+    createDir(binOutDir)
+
+proc buildMacosUniversal(outDir: string, release = false,  flags: seq[string]) =
+  let tmpDir = getTempDir()
+  let pwd = getCurrentDir()
+  let pkgInfo = getPkgInfo()
+
+  let flags2 = flags & @["--cpu:amd64"]
+  let flags3 = flags & @["--cpu:arm64"]
+  
+  let (output, exitCode) = actualBuildMacos(release, flags2)
+  if exitCode != 0:
+    quit(output)
+  debugEcho output
+  let x86Dest = tmpDir / pkgInfo.name & "_x86_64"
+  let arm64Dest = tmpDir / pkgInfo.name & "_arm64"
+  moveFile(pwd / pkgInfo.name, x86Dest)
+  let (output2, exitCode2) = actualBuildMacos(release, flags3)
+  if exitCode2 != 0:
+    quit(output2)
+  debugEcho output2
+  moveFile(pwd / pkgInfo.name, arm64Dest)
+  # lipo -create -output universal_app x86_app arm_app
+
+  let cmd = @["lipo", "-create", "-output", quoteShell(outDir / pkgInfo.name), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
+  let (output3, exitCode3) = execCmdEx(cmd)
+  debugEcho output3
 
 proc runMacos(release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
@@ -197,16 +231,6 @@ proc runLinux(release = false, flags: seq[string]) =
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
   debugEcho output
-
-proc getAppDir(target: string, release: bool, name = ""): string =
-  let pkgInfo = getPkgInfo()
-  let pwd = getCurrentDir()
-  let buildDir = pwd / "build" / target
-  let subDir = if release: "Release" else: "Debug"
-  result = buildDir / subDir
-  if target == "macos":
-    let resName = if name.len > 0: name else: pkgInfo.name
-    result = result / resName & ".app"
 
 proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: seq[string]): string {.discardable.} =
   let pwd: string = getCurrentDir()
@@ -374,21 +398,34 @@ proc postScript(post_build: string, target: string, release: bool, flags:seq[str
 
 proc build(target: string, icon = "logo.png",
     post_build = "nimpacker" / "post_build.nims",
-    release = false, flags: seq[string]): int =
+    release = false,  format = "", flags: seq[string]): int =
   let metaInfo = getMetaInfo()
+  let pkgInfo = getPkgInfo()
+  let productName = metaInfo.productName
+  let name = if productName.len > 0: productName else: pkgInfo.name
+  let appDir = getAppDir(target, release, name)
+  let pwd = getCurrentDir()
   case target:
     of "macos":
-      buildMacos(icon, release, metaInfo, flags)
+      let binOutDir = appDir / "Contents" / "MacOS"
+      if format == "universal":
+        createMacosApp(icon, release, metaInfo, flags)
+        buildMacosUniversal(binOutDir, release, flags)
+      else:
+        createMacosApp(icon, release, metaInfo, flags)
+        let (output, exitCode) = actualBuildMacos(release, flags)
+        if exitCode == 0:
+            debugEcho output
+            
+            moveFile(pwd / pkgInfo.name, binOutDir / pkgInfo.name)
+        else:
+          debugEcho output
     of "windows":
       buildWindows(icon, release, metaInfo, flags)
     of "linux":
       buildLinux(icon, release, "deb", flags)
     else:
       discard
-  let pkgInfo = getPkgInfo()
-  let productName = metaInfo.productName
-  let name = if productName.len > 0: productName else: pkgInfo.name
-  let appDir = getAppDir(target, release, name)
   postScript(post_build, target, release, flags, appDir)
 
 proc run(target: string, release = false, flags: seq[string]): int =
@@ -446,9 +483,21 @@ proc pack(target: string, icon = "logo.png",
   let productName = metaInfo.productName
   let name = if productName.len > 0: productName else: pkgInfo.name
   let appDir = getAppDir(target, release,name)
+  let pwd = getCurrentDir()
   case target:
     of "macos":
-      buildMacos(icon, release, metaInfo, flags)
+      let binOutDir = appDir / "Contents" / "MacOS"
+      if format == "universal":
+        createMacosApp(icon, release, metaInfo, flags)
+        buildMacosUniversal(binOutDir, release, flags)
+      else:
+        createMacosApp(icon, release, metaInfo, flags)
+        let (output, exitCode) = actualBuildMacos(release, flags)
+        if exitCode == 0:
+          debugEcho output
+          moveFile(pwd / pkgInfo.name, binOutDir / pkgInfo.name)
+        else:
+          debugEcho output
       postScript(post_build, target, release, flags, appDir)
       packMacos(release, metaInfo, arch)
     of "windows":
