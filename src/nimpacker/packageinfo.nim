@@ -1,3 +1,4 @@
+
 type PackageInfo* = ref object
   name*: string
   version*: string
@@ -60,3 +61,5 @@ type MetaInfo* = ref object
   runAsAdmin*: bool
   executionLevel*: ExecutionLevel
   exportedTypeDeclarations*: seq[ExportedTypeDeclaration]
+  macosCategory*: string
+  appUsesNonExemptEncryption*: bool
