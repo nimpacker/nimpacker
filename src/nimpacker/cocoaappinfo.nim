@@ -17,7 +17,7 @@ jsonSchema:
     NSAllowsLocalNetworking?:bool
     NSExceptionDomains ?: any
   DocumentType:
-    CFBundleTypeName: string
+    CFBundleTypeName: string # must be non empty when upload appstore
     # Deprecated in OS X v10.5
     CFBundleTypeExtensions?:string[]
     # Deprecated in OS X v10.5
