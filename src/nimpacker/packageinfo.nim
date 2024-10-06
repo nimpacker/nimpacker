@@ -65,3 +65,4 @@ type MetaInfo* = ref object
   appUsesNonExemptEncryption*: bool
   supportedPlatforms*: seq[string]
   copyright*: string
+  minimumSystemVersion*: string

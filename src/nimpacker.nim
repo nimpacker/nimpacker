@@ -153,6 +153,7 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
     CFBundleIdentifier = if metaInfo.bundleIdentifier.len > 0: some(metaInfo.bundleIdentifier) else: none(string),
     ITSAppUsesNonExemptEncryption = some(metaInfo.appUsesNonExemptEncryption),
     CFBundleSupportedPlatforms = metaInfo.supportedPlatforms,
+    LSMinimumSystemVersion = if metaInfo.minimumSystemVersion.len > 0: some(metaInfo.minimumSystemVersion) else: none(string),
     NSAppTransportSecurity = sec,
     CFBundleInfoDictionaryVersion = CFBundleInfoDictionaryVersion,
     NSHumanReadableCopyright = if metaInfo.copyright.len > 0: some(metaInfo.copyright) else: none(string),

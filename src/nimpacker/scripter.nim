@@ -15,7 +15,8 @@ addVariable(myImpl, appId, string)
 addVariable(myImpl, bundleIdentifier, string)
 addVariable(myImpl, appUsesNonExemptEncryption, bool)
 addVariable(myImpl, supportedPlatforms, seq[string])
-
+addVariable(myImpl, minimumSystemVersion, string)
+addVariable(myImpl, copyright, string)
 
 addVariable(myImpl, fileAssociations, seq[DocumentType])
 addVariable(myImpl, exportedTypeDeclarations, seq[ExportedTypeDeclaration])
@@ -92,7 +93,8 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     let macosCategory = intr.getGlobalVariable[:string]("macosCategory")
     let appUsesNonExemptEncryption = intr.getGlobalVariable[:bool]("appUsesNonExemptEncryption")
     let supportedPlatforms = intr.getGlobalVariable[:seq[string]]("supportedPlatforms")
-
+    let minimumSystemVersion = intr.getGlobalVariable[:string]("minimumSystemVersion")
+    let copyright = intr.getGlobalVariable[:string]("copyright")
     result.productName = productName
     result.appId = appId
     result.bundleIdentifier = bundleIdentifier
@@ -109,6 +111,8 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     result.appUsesNonExemptEncryption = appUsesNonExemptEncryption
     # "iPhoneOS" "MacOSX" "WatchOS" "AppleTVOS"
     result.supportedPlatforms = if supportedPlatforms.len > 0: supportedPlatforms else: @["MacOSX"]
+    result.copyright = copyright
+    result.minimumSystemVersion = minimumSystemVersion
 
 proc exec*(path: string) =
   if fileExists(path):

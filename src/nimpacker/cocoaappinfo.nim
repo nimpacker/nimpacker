@@ -53,6 +53,7 @@ jsonSchema:
     # For macOS apps, make sure that you set the copyright key in the information property list before you upload your app to App Store Connect.
     # see: https://help.apple.com/xcode/mac/current/#/dev91fe7130a
     NSHumanReadableCopyright?: string
+    LSMinimumSystemVersion?: string # required for Mac App Store
     CFBundleExecutable: string
     CFBundleIdentifier?:string
     CFBundlePackageType ?: string
