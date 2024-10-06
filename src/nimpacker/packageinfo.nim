@@ -63,3 +63,4 @@ type MetaInfo* = ref object
   exportedTypeDeclarations*: seq[ExportedTypeDeclaration]
   macosCategory*: string
   appUsesNonExemptEncryption*: bool
+  supportedPlatforms*: seq[string]

@@ -43,9 +43,10 @@ jsonSchema:
     CFBundleDisplayName: string
     CFBundleName ?: string
     CFBundleVersion: string
-    CFBundleShortVersionString: string # required for .pkg
-    LSApplicationCategoryType?: string # required for .pkg
-    ITSAppUsesNonExemptEncryption?: bool
+    CFBundleShortVersionString: string # required for uploading .pkg to appstore
+    LSApplicationCategoryType?: string # required for uploading .pkg to appstore
+    ITSAppUsesNonExemptEncryption?: bool # required for uploading .pkg to appstore
+    CFBundleSupportedPlatforms: string[] # required for uploading .pkg to appstore
     CFBundleExecutable: string
     CFBundleIdentifier?:string
     CFBundlePackageType ?: string

@@ -151,6 +151,7 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
     LSApplicationCategoryType = if metaInfo.macosCategory.len > 0: some(metaInfo.macosCategory) else: none(string),
     CFBundleIdentifier = if metaInfo.bundleIdentifier.len > 0: some(metaInfo.bundleIdentifier) else: none(string),
     ITSAppUsesNonExemptEncryption = some(metaInfo.appUsesNonExemptEncryption),
+    CFBundleSupportedPlatforms = metaInfo.supportedPlatforms,
     NSAppTransportSecurity = sec,
     CFBundleIconName = none(string),
     CFBundleDocumentTypes = dt,
