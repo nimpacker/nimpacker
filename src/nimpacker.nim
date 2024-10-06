@@ -25,6 +25,7 @@ type
 const DEBUG_OPTS = " --verbose --debug "
 const RELEASE_OPTS = " -d:release " # -d:noSignalHandler --exceptions:quirky
 const CACHE_DIR_NAME = ".nimpacker_cache"
+const CFBundleInfoDictionaryVersion = "6.0"
 
 proc getPkgInfo(): PackageInfo =
   let r = execCmdEx("nimble dump --json --silent " & getCurrentDir())
@@ -153,6 +154,8 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
     ITSAppUsesNonExemptEncryption = some(metaInfo.appUsesNonExemptEncryption),
     CFBundleSupportedPlatforms = metaInfo.supportedPlatforms,
     NSAppTransportSecurity = sec,
+    CFBundleInfoDictionaryVersion = CFBundleInfoDictionaryVersion,
+    NSHumanReadableCopyright = if metaInfo.copyright.len > 0: some(metaInfo.copyright) else: none(string),
     CFBundleIconName = none(string),
     CFBundleDocumentTypes = dt,
     UTExportedTypeDeclarations = if len(exportedTypeDeclarations) > 0: 

@@ -47,6 +47,12 @@ jsonSchema:
     LSApplicationCategoryType?: string # required for uploading .pkg to appstore
     ITSAppUsesNonExemptEncryption?: bool # required for uploading .pkg to appstore
     CFBundleSupportedPlatforms: string[] # required for uploading .pkg to appstore
+    # Xcode generates this key automatically when you build a bundle and you should not change it manually. The value for this key is currently 6.0.
+    # see: https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102088
+    CFBundleInfoDictionaryVersion: string  
+    # For macOS apps, make sure that you set the copyright key in the information property list before you upload your app to App Store Connect.
+    # see: https://help.apple.com/xcode/mac/current/#/dev91fe7130a
+    NSHumanReadableCopyright?: string
     CFBundleExecutable: string
     CFBundleIdentifier?:string
     CFBundlePackageType ?: string

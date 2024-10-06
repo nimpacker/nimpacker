@@ -64,3 +64,4 @@ type MetaInfo* = ref object
   macosCategory*: string
   appUsesNonExemptEncryption*: bool
   supportedPlatforms*: seq[string]
+  copyright*: string
