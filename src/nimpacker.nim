@@ -472,12 +472,12 @@ proc packWindows(release:bool, icoPath: string, metaInfo: MetaInfo) =
   if not found:
     debugEcho output
 
-proc packMacos(release:bool, metaInfo: MetaInfo, arch: string) =
+proc packMacos(release:bool, metaInfo: MetaInfo, suffix: string) =
   let pkgInfo = getPkgInfo()
   let productName = metaInfo.productName
   let name = if productName.len > 0: productName else: pkgInfo.name
   let appDir = getAppDir("macos", release,name)
-  let cmd = getCreateDmg(pkgInfo, metaInfo, appDir, arch)
+  let cmd = getCreateDmg(pkgInfo, metaInfo, appDir, suffix)
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
   debugEcho output
@@ -507,7 +507,10 @@ proc pack(target: string, icon = "logo.png",
         else:
           debugEcho output
       postScript(post_build, target, release, flags, appDir)
-      packMacos(release, metaInfo, arch)
+      if format == "universal":
+        packMacos(release, metaInfo, format)
+      else:
+        packMacos(release, metaInfo, arch)
     of "windows":
       let icoPath = buildWindows(icon, release, metaInfo, flags)
       postScript(post_build, target, release, flags, appDir)

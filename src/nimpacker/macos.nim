@@ -1,12 +1,12 @@
 import std/[os, strformat]
 import ./packageinfo
 
-proc getCreateDmg*(pkgInfo: PackageInfo, metaInfo: MetaInfo, appDir: string, arch: string):string =
+proc getCreateDmg*(pkgInfo: PackageInfo, metaInfo: MetaInfo, appDir: string, suffix: string):string =
   let productName = metaInfo.productName
   let name = if productName.len > 0: productName else: pkgInfo.name
   let dir = "dist"
   createDir(dir)
-  let outputPath = dir / fmt"{name}_{arch}.dmg"
+  let outputPath = dir / fmt"{name}_{suffix}.dmg"
   if fileExists(outputPath):
     removeFile(outputPath)
   result = fmt"""
