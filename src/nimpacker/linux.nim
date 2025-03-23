@@ -42,7 +42,7 @@ proc getDirectorySize*(directory: string): int =
   return totalSize
 
 proc getControlBasic*(pkgInfo: PackageInfo, metaInfo: MetaInfo): string =
-  ## Debian control file basic content, see https://www.debian.org/doc/debian-policy/ch-controlfields.html
+  ## Debian control file basic content, see https://www.DEBIAN.org/doc/DEBIAN-policy/ch-controlfields.html
   let arch = hostCPU
   result = fmt"""
   Source: {pkgInfo.name}
@@ -54,7 +54,7 @@ proc getControlBasic*(pkgInfo: PackageInfo, metaInfo: MetaInfo): string =
   """.unindent
 
 proc getControl*(pkgInfo: PackageInfo, metaInfo: MetaInfo, depends: seq[string], size: int): string =
-  ## Debian control file content, see https://www.debian.org/doc/debian-policy/ch-controlfields.html
+  ## Debian control file content, see https://www.DEBIAN.org/doc/DEBIAN-policy/ch-controlfields.html
   ## installed size in kb
   let arch = hostCPU
   var deps = metaInfo.linuxDepends
@@ -86,9 +86,9 @@ proc createLinuxTree*(baseDir: string) =
   createDir(baseDir / "usr" / "include")
 
 proc createDebianTree*(baseDir: string) =
-  createDir(baseDir / "debian")
-  setFilePermissions(baseDir / "debian", Perm755)
-  # debian/control
+  createDir(baseDir / "DEBIAN")
+  setFilePermissions(baseDir / "DEBIAN", Perm755)
+  # DEBIAN/control
   createLinuxTree(baseDir)
 
 proc getDesktop*(pkgInfo: PackageInfo, metaInfo: MetaInfo, format = ""): string =

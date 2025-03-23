@@ -40,7 +40,7 @@ example directory structure.
 ├── build
 │   ├── linux
 │   │   └── Release
-│   │       ├── debian
+│   │       ├── DEBIAN
 │   │       │   └── control
 │   │       └── usr
 │   │           ├── bin
@@ -67,7 +67,7 @@ example directory structure.
 ├── nimpacker
 │   ├── post_build.nims
 │   ├── meta.nims
-│   └── debian
+│   └── DEBIAN
 │       ├── preinst
 │       ├── postinst
 │       ├── prerm
@@ -81,7 +81,7 @@ example directory structure.
 
 `nimpacker/meta.nims` is variables defined for app meta info.
 
-`nimpacker/debian` scripts for deb package.
+`nimpacker/DEBIAN` scripts for deb package.
 
 example `nimpacker/post_build.nims`
 
@@ -144,7 +144,7 @@ fileAssociations = @[
     )
 ]
 
-maintainer = "Debian QA Group <packages@qa.debian.org>" # deb Maintainer
+maintainer = "Debian QA Group <packages@qa.DEBIAN.org>" # deb Maintainer
 homepage = "https://nim-lang.org" # deb and exe Homepage
 linuxCategories = @["Utility"]
 ```

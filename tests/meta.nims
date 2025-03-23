@@ -17,5 +17,5 @@ fileAssociations = @[
     )
 ]
 
-maintainer = "Debian QA Group <packages@qa.debian.org>" # deb Maintainer
+maintainer = "Debian QA Group <packages@qa.DEBIAN.org>" # deb Maintainer
 homepage = "https://nim-lang.org" # deb and exe Homepage

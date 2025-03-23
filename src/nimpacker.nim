@@ -373,13 +373,13 @@ proc packLinux(release:bool, icon: string) =
     inclFilePermissions(exe, {fpUserExec, fpGroupExec, fpOthersExec})
   const DebScripts = ["preinst", "postinst", "prerm", "postrm"]
   for script in DebScripts:
-    if fileExists("nimpacker" / "debian" / script):
-      convertLineEndings("nimpacker" / "debian" / script, appDir / "debian" / script)
-      setFilePermissions(appDir / "debian" / script, Perm755)
+    if fileExists("nimpacker" / "DEBIAN" / script):
+      convertLineEndings("nimpacker" / "DEBIAN" / script, appDir / "DEBIAN" / script)
+      setFilePermissions(appDir / "DEBIAN" / script, Perm755)
       
   let baseControl = getControlBasic(pkgInfo, metaInfo)
-  writeFile(appDir / "debian" / "control", baseControl)
-  setFilePermissions(appDir / "debian" / "control", Perm755)
+  writeFile(appDir / "DEBIAN" / "control", baseControl)
+  setFilePermissions(appDir / "DEBIAN" / "control", Perm755)
   let oldPWD = getCurrentDir()
   setCurrentDir(appDir)
   let deps = collectDeps(exes)
@@ -387,8 +387,8 @@ proc packLinux(release:bool, icon: string) =
   let size = getDirectorySize(appDir)
   let sizeInKb = size div 1024
   let controlContent = getControl(pkgInfo, metaInfo, deps, sizeInKb)
-  writeFile(appDir / "debian" / "control", controlContent)
-  setFilePermissions(appDir / "debian" / "control", Perm755)
+  writeFile(appDir / "DEBIAN" / "control", controlContent)
+  setFilePermissions(appDir / "DEBIAN" / "control", Perm755)
   let cmd = fmt"dpkg-deb --build {appDir} dist"
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
