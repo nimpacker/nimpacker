@@ -424,8 +424,8 @@ proc build(target: string, icon = "logo.png",
         let (output, exitCode) = actualBuildMacos(release, flags)
         if exitCode == 0:
             debugEcho output
-            
-            moveFile(pwd / pkgInfo.name, binOutDir / pkgInfo.name)
+            let src = if fileExists(pwd / pkgInfo.name & ".out"): pwd / pkgInfo.name & ".out" else: binOutDir / pkgInfo.name
+            moveFile(src, binOutDir / pkgInfo.name)
         else:
           debugEcho output
     of "windows":
@@ -503,7 +503,8 @@ proc pack(target: string, icon = "logo.png",
         let (output, exitCode) = actualBuildMacos(release, flags)
         if exitCode == 0:
           debugEcho output
-          moveFile(pwd / pkgInfo.name, binOutDir / pkgInfo.name)
+          let src = if fileExists(pwd / pkgInfo.name & ".out"): pwd / pkgInfo.name & ".out" else: binOutDir / pkgInfo.name
+          moveFile(src, binOutDir / pkgInfo.name)
         else:
           debugEcho output
       postScript(post_build, target, release, flags, appDir)

@@ -21,3 +21,5 @@ build/
 app.json
 *.out
 .crowngui_cache/
+nimble.develop
+nimble.paths
