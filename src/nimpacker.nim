@@ -32,6 +32,69 @@ proc getPkgInfo(): PackageInfo =
   let jsonNode = parseJson(r.output)
   result = to(jsonNode, PackageInfo)
 
+proc getBinaryName(binPath: string): string =
+  ## Extract just the binary name from a path like "subdir/tool2" -> "tool2"
+  result = splitPath(binPath).tail
+
+proc getBinaryDir(binPath: string): string =
+  ## Get the directory part of a binary path like "subdir/tool2" -> "subdir"
+  let (dir, _) = splitPath(binPath)
+  result = dir
+
+proc moveAllBinaries(pkgInfo: PackageInfo, targetDir: string) =
+  ## Move all binaries from the build to the target directory, preserving directory structure (Linux/macOS version)
+  let pwd = getCurrentDir()
+  
+  for binPath in pkgInfo.bin:
+    # Try the exact path first
+    var srcPath = pwd / binPath
+    
+    if not fileExists(srcPath):
+      # Try with .out extension
+      let (srcDir, srcFile) = splitPath(srcPath)
+      srcPath = srcDir / (srcFile & ".out")
+    
+    if fileExists(srcPath):
+      # For Linux/macOS, preserve actual filename (including .out extension)
+      let (_, srcFile) = splitPath(srcPath)
+      let dstPath = targetDir / binPath
+      
+      # Create destination directory if it doesn't exist
+      let dstDir = dstPath.parentDir()
+      if dstDir.len > 0 and not dirExists(dstDir):
+        createDir(dstDir)
+      
+      # Move the file as-is, preserving the actual filename
+      let finalDstPath = dstDir / srcFile
+      moveFile(srcPath, finalDstPath)
+      echo "Moved binary: ", srcPath, " -> ", finalDstPath
+    else:
+      let (srcDir, srcFile) = splitPath(pwd / binPath)
+      echo "Warning: Binary not found: ", binPath, " (tried: ", pwd / binPath, ", ", srcDir / (srcFile & ".out"), ")"
+
+proc moveAllBinariesWindows(pkgInfo: PackageInfo, targetDir: string) =
+  ## Move all binaries from the build to the target directory, preserving directory structure (Windows version)
+  let pwd = getCurrentDir()
+  
+  for binPath in pkgInfo.bin:
+    # For Windows, just use the exact path with .exe extension
+    let srcPath = pwd / binPath & ".exe"
+    
+    if fileExists(srcPath):
+      # For Windows, always use .exe extension in destination
+      let dstPath = targetDir / binPath & ".exe"
+      
+      # Create destination directory if it doesn't exist
+      let dstDir = dstPath.parentDir()
+      if dstDir.len > 0 and not dirExists(dstDir):
+        createDir(dstDir)
+      
+      # Move the file
+      moveFile(srcPath, dstPath)
+      echo "Moved Windows binary: ", srcPath, " -> ", dstPath
+    else:
+      echo "Warning: Windows binary not found: ", binPath & ".exe"
+
 proc getArch(flags: seq[string]): string = 
   for kind, key, val in getopt(flags):
     case kind
@@ -141,10 +204,12 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
   # let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
   let sec = none(NSAppTransportSecurity)
+  
+  let mainExecutable = pkgInfo.name & ".out"
   let appInfo = create(CocoaAppInfo,
     NSHighResolutionCapable = some(true),
     CFBundlePackageType = some("APPL"),
-    CFBundleExecutable = pkgInfo.name,
+    CFBundleExecutable = mainExecutable,
     CFBundleDisplayName = displayName,
     CFBundleName = some(displayName), # affect menu bar title especially exectuable name diffrent.
     CFBundleVersion = pkgInfo.version,
@@ -202,19 +267,50 @@ proc buildMacosUniversal(outDir: string, release = false,  flags: seq[string]) =
   if exitCode != 0:
     quit(output)
   debugEcho output
-  let x86Dest = tmpDir / pkgInfo.name & "_x86_64"
-  let arm64Dest = tmpDir / pkgInfo.name & "_arm64"
-  moveFile(pwd / pkgInfo.name, x86Dest)
+  
   let (output2, exitCode2) = actualBuildMacos(release, flags3)
   if exitCode2 != 0:
     quit(output2)
   debugEcho output2
-  moveFile(pwd / pkgInfo.name, arm64Dest)
-  # lipo -create -output universal_app x86_app arm_app
-
-  let cmd = @["lipo", "-create", "-output", quoteShell(outDir / pkgInfo.name), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
-  let (output3, exitCode3) = execCmdEx(cmd)
-  debugEcho output3
+  
+  # Create universal binaries for each binary in the package
+  for binPath in pkgInfo.bin:
+    let binName = getBinaryName(binPath)
+    let binDir = getBinaryDir(binPath)
+    let x86Dest = tmpDir / binName & "_x86_64"
+    let arm64Dest = tmpDir / binName & "_arm64"
+    
+    # Try different locations for the x86_64 binary
+    var x86Found = false
+    if fileExists(pwd / binPath):
+      moveFile(pwd / binPath, x86Dest)
+      x86Found = true
+    elif binDir.len > 0 and fileExists(pwd / binDir / binName):
+      moveFile(pwd / binDir / binName, x86Dest)
+      x86Found = true
+    elif fileExists(pwd / binName):
+      moveFile(pwd / binName, x86Dest)
+      x86Found = true
+    
+    # Try different locations for the arm64 binary
+    var arm64Found = false
+    if fileExists(pwd / binPath):
+      moveFile(pwd / binPath, arm64Dest)
+      arm64Found = true
+    elif binDir.len > 0 and fileExists(pwd / binDir / binName):
+      moveFile(pwd / binDir / binName, arm64Dest)
+      arm64Found = true
+    elif fileExists(pwd / binName):
+      moveFile(pwd / binName, arm64Dest)
+      arm64Found = true
+    
+    # Create universal binary using lipo if both architectures were found
+    if x86Found and arm64Found:
+      let cmd = @["lipo", "-create", "-output", quoteShell(outDir / binName), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
+      let (output3, exitCode3) = execCmdEx(cmd)
+      debugEcho output3
+    else:
+      echo "Warning: Could not create universal binary for ", binName, " (x86_64 found: ", x86Found, ", arm64 found: ", arm64Found, ")"
 
 proc runMacos(release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
@@ -268,17 +364,45 @@ proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: 
 
   if e == 0:
     debugEcho o
-    let exePath = pwd / pkgInfo.name & ".exe"
-    if icoPath.len > 0 and fileExists(icoPath):
-      var options = {"icon": icoPath}.toTable()
-      if metaInfo.runAsAdmin:
-        let tempDir = getTempDir()
-        let path = tempDir / pkgInfo.name & ".mainifest"
-        let xml = createAppMainifest(metaInfo.executionLevel, false)
-        writeFile(path, xmlHeader & $xml)
-        options["application-manifest"] = path
-      rcedit(none(string), exePath, options)
-    moveFile(exePath, appDir / pkgInfo.name & ".exe")
+    # Handle multiple binaries with icon/manifest support
+    let pwd = getCurrentDir()
+    
+    for binPath in pkgInfo.bin:
+      let binName = getBinaryName(binPath)
+      let binDir = getBinaryDir(binPath)
+      
+      # Try different possible source locations for Windows binaries
+      var exePath = pwd / binName & ".exe"
+      var found = false
+      
+      if fileExists(exePath):
+        found = true
+      elif binDir.len > 0 and fileExists(pwd / binDir / binName & ".exe"):
+        # Try with subdirectory
+        exePath = pwd / binDir / binName & ".exe"
+        found = true
+      
+      if found:
+        # Preserve directory structure in destination
+        let dstPath = appDir / binPath & ".exe"
+        let dstDir = appDir / binDir
+        
+        # Create destination directory if it doesn't exist and binDir is not empty
+        if binDir.len > 0 and not dirExists(dstDir):
+          createDir(dstDir)
+        
+        # Apply icon and manifest to the main binary (first one)
+        if icoPath.len > 0 and fileExists(icoPath) and binName == getBinaryName(pkgInfo.bin[0]):
+          var options = {"icon": icoPath}.toTable()
+          if metaInfo.runAsAdmin:
+            let tempDir = getTempDir()
+            let path = tempDir / binName & ".mainifest"
+            let xml = createAppMainifest(metaInfo.executionLevel, false)
+            writeFile(path, xmlHeader & $xml)
+            options["application-manifest"] = path
+          rcedit(none(string), exePath, options)
+        moveFile(exePath, dstPath)
+        echo "Moved Windows binary: ", exePath, " -> ", dstPath
   else:
     debugEcho o
   result = icoPath
@@ -300,8 +424,7 @@ proc buildLinux(app_logo: string, release = false, format = "deb", flags: seq[st
   let (o, e) = execCmdEx(finalCMD)
   if e == 0:
     debugEcho o
-    let exePath = pwd / pkgInfo.name
-    moveFile(exePath, appDir / pkgInfo.name)
+    moveAllBinaries(pkgInfo, appDir)
   else:
     quit o
 
@@ -362,7 +485,22 @@ proc packLinux(release:bool, icon: string) =
   let pkgInfo = getPkgInfo()
   let appDir = getAppDir("linux", release)
   createDebianTree(appDir)
-  moveFile(appDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
+  # Move all binaries to usr/bin, preserving directory structure
+  for binPath in pkgInfo.bin:
+    let binName = getBinaryName(binPath)
+    let binDir = getBinaryDir(binPath)
+    let srcPath = appDir / binPath
+    let dstPath = appDir / "usr" / "bin" / binPath
+    
+    # Create destination directory if it doesn't exist and binDir is not empty
+    if binDir.len > 0:
+      let dstDir = appDir / "usr" / "bin" / binDir
+      if not dirExists(dstDir):
+        createDir(dstDir)
+    
+    if fileExists(srcPath):
+      moveFile(srcPath, dstPath)
+      echo "Moved binary to usr/bin: ", srcPath, " -> ", dstPath
   copyFile(icon, appDir / "usr" / "share" / "icons" / pkgInfo.name & ".png")
   let metaInfo = getMetaInfo()
   let desktop = getDesktop(pkgInfo, metaInfo)
@@ -423,9 +561,8 @@ proc build(target: string, icon = "logo.png",
         createMacosApp(icon, release, metaInfo, flags)
         let (output, exitCode) = actualBuildMacos(release, flags)
         if exitCode == 0:
-            debugEcho output
-            let src = if fileExists(pwd / pkgInfo.name & ".out"): pwd / pkgInfo.name & ".out" else: binOutDir / pkgInfo.name
-            moveFile(src, binOutDir / pkgInfo.name)
+          debugEcho output
+          moveAllBinaries(pkgInfo, binOutDir)
         else:
           debugEcho output
     of "windows":
@@ -503,8 +640,7 @@ proc pack(target: string, icon = "logo.png",
         let (output, exitCode) = actualBuildMacos(release, flags)
         if exitCode == 0:
           debugEcho output
-          let src = if fileExists(pwd / pkgInfo.name & ".out"): pwd / pkgInfo.name & ".out" else: binOutDir / pkgInfo.name
-          moveFile(src, binOutDir / pkgInfo.name)
+          moveAllBinaries(pkgInfo, binOutDir)
         else:
           debugEcho output
       postScript(post_build, target, release, flags, appDir)

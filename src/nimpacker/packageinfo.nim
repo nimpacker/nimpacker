@@ -5,6 +5,7 @@ type PackageInfo* = ref object
   author*: string
   desc*: string
   license*: string
+  bin*: seq[string]
 
 type DocumentTypeRole* = enum
   None = "None"
