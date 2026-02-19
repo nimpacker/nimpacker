@@ -150,15 +150,17 @@ proc actualBuildMacos(release = false, flags: seq[string]): (string, int) =
   debugEcho finalCMD
   result = execCmdEx(finalCMD, options = {poUsePath})
 
+proc cleanMacosBuild() =
+  let pwd = getCurrentDir()
+  let buildDir = pwd / "build" / "macos"
+  removeDir(buildDir)
+
 proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = default(MetaInfo), flags: seq[string]) =
   ## create MacOS .app package
   let pwd: string = getCurrentDir()
   let pkgInfo = getPkgInfo()
   let buildDir = pwd / "build" / "macos"
-  if not dirExists(buildDir):
-    createDir(buildDir)
   let subDir = if release: "Release" else: "Debug"
-  removeDir(buildDir)
   let productName = metaInfo.productName
   let displayName = if productName.len > 0: productName else: pkgInfo.name 
   let appDir = buildDir / subDir / displayName & ".app"
@@ -204,8 +206,12 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
   # let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
   let sec = none(NSAppTransportSecurity)
+  let binDir = appDir / "Contents" / "MacOS"
   
-  let mainExecutable = pkgInfo.name & ".out"
+  let mainExecutable = if fileExists(binDir / (pkgInfo.name & ".out")):
+      pkgInfo.name & ".out" elif fileExists(binDir / pkgInfo.name):
+        pkgInfo.name else: quit("main executable not found")
+  debugEcho "Main executable: " & mainExecutable
   let appInfo = create(CocoaAppInfo,
     NSHighResolutionCapable = some(true),
     CFBundlePackageType = some("APPL"),
@@ -260,57 +266,57 @@ proc buildMacosUniversal(outDir: string, release = false,  flags: seq[string]) =
   let pwd = getCurrentDir()
   let pkgInfo = getPkgInfo()
 
-  let flags2 = flags & @["--cpu:amd64"]
-  let flags3 = flags & @["--cpu:arm64"]
+  # Build x86_64 binaries
+  let flagsX86 = flags & @["--cpu:amd64"]
+  let (outputX86, exitCodeX86) = actualBuildMacos(release, flagsX86)
+  if exitCodeX86 != 0:
+    quit(outputX86)
+  debugEcho outputX86
   
-  let (output, exitCode) = actualBuildMacos(release, flags2)
-  if exitCode != 0:
-    quit(output)
-  debugEcho output
-  
-  let (output2, exitCode2) = actualBuildMacos(release, flags3)
-  if exitCode2 != 0:
-    quit(output2)
-  debugEcho output2
+  # Move x86_64 binaries to temp location immediately after build
+  for binPath in pkgInfo.bin:
+    let binName = getBinaryName(binPath)
+    let binDir = getBinaryDir(binPath)
+    let x86Dest = tmpDir / binName & "_x86_64"
+    
+    # Try different locations for the x86_64 binary
+    if fileExists(pwd / binPath):
+      moveFile(pwd / binPath, x86Dest)
+    elif binDir.len > 0 and fileExists(pwd / binDir / binName & ".out"):
+      moveFile(pwd / binDir / binName & ".out", x86Dest)
+      
+    else:
+      quit("Could not find binary for " & binPath)
+
+  # Build ARM64 binaries
+  let flagsArm64 = flags & @["--cpu:arm64"]
+  let (outputArm64, exitCodeArm64) = actualBuildMacos(release, flagsArm64)
+  if exitCodeArm64 != 0:
+    quit(outputArm64)
+  debugEcho outputArm64
   
   # Create universal binaries for each binary in the package
   for binPath in pkgInfo.bin:
     let binName = getBinaryName(binPath)
     let binDir = getBinaryDir(binPath)
-    let x86Dest = tmpDir / binName & "_x86_64"
     let arm64Dest = tmpDir / binName & "_arm64"
     
-    # Try different locations for the x86_64 binary
-    var x86Found = false
-    if fileExists(pwd / binPath):
-      moveFile(pwd / binPath, x86Dest)
-      x86Found = true
-    elif binDir.len > 0 and fileExists(pwd / binDir / binName):
-      moveFile(pwd / binDir / binName, x86Dest)
-      x86Found = true
-    elif fileExists(pwd / binName):
-      moveFile(pwd / binName, x86Dest)
-      x86Found = true
-    
     # Try different locations for the arm64 binary
-    var arm64Found = false
     if fileExists(pwd / binPath):
       moveFile(pwd / binPath, arm64Dest)
-      arm64Found = true
-    elif binDir.len > 0 and fileExists(pwd / binDir / binName):
-      moveFile(pwd / binDir / binName, arm64Dest)
-      arm64Found = true
-    elif fileExists(pwd / binName):
-      moveFile(pwd / binName, arm64Dest)
-      arm64Found = true
-    
-    # Create universal binary using lipo if both architectures were found
-    if x86Found and arm64Found:
-      let cmd = @["lipo", "-create", "-output", quoteShell(outDir / binName), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
-      let (output3, exitCode3) = execCmdEx(cmd)
-      debugEcho output3
+    elif binDir.len > 0 and fileExists(pwd / binDir / binName & ".out"):
+      moveFile(pwd / binDir / binName & ".out", arm64Dest)
     else:
-      echo "Warning: Could not create universal binary for ", binName, " (x86_64 found: ", x86Found, ", arm64 found: ", arm64Found, ")"
+      quit("Could not find binary for " & binPath)
+  
+  for binPath in pkgInfo.bin:
+    let binName = getBinaryName(binPath)
+    let binDir = getBinaryDir(binPath)
+    let arm64Dest = tmpDir / binName & "_arm64"
+    let x86Dest = tmpDir / binName & "_x86_64"
+    let cmd = @["lipo", "-create", "-output", quoteShell(outDir / binName), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
+    let (output, exitCode) = execCmdEx(cmd)
+    debugEcho output
 
 proc runMacos(release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
@@ -554,15 +560,17 @@ proc build(target: string, icon = "logo.png",
   case target:
     of "macos":
       let binOutDir = appDir / "Contents" / "MacOS"
+      cleanMacosBuild()
+      createDir(binOutDir)
       if format == "universal":
-        createMacosApp(icon, release, metaInfo, flags)
         buildMacosUniversal(binOutDir, release, flags)
-      else:
         createMacosApp(icon, release, metaInfo, flags)
+      else: 
         let (output, exitCode) = actualBuildMacos(release, flags)
         if exitCode == 0:
           debugEcho output
           moveAllBinaries(pkgInfo, binOutDir)
+          createMacosApp(icon, release, metaInfo, flags)
         else:
           debugEcho output
     of "windows":
@@ -632,15 +640,17 @@ proc pack(target: string, icon = "logo.png",
   case target:
     of "macos":
       let binOutDir = appDir / "Contents" / "MacOS"
+      cleanMacosBuild()
+      createDir(binOutDir)
       if format == "universal":
-        createMacosApp(icon, release, metaInfo, flags)
         buildMacosUniversal(binOutDir, release, flags)
-      else:
         createMacosApp(icon, release, metaInfo, flags)
+      else:
         let (output, exitCode) = actualBuildMacos(release, flags)
         if exitCode == 0:
           debugEcho output
           moveAllBinaries(pkgInfo, binOutDir)
+          createMacosApp(icon, release, metaInfo, flags)
         else:
           debugEcho output
       postScript(post_build, target, release, flags, appDir)
