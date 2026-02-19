@@ -10,7 +10,7 @@ Build and packaging nimble binary package for Windows, macOS and Linux.
 
 on Windows will generate `.ico` and embedd into `.exe` via `rcedit`.
 
-on macOS will generate `.icns` and put into `.app` directory.
+on macOS will generate `.icns` and put into `.app` directory. Supports universal binaries for both Intel and Apple Silicon Macs with `--format universal`.
 
 on Linux just binary.
 
@@ -24,7 +24,7 @@ Packaging nimble binary package into (`.exe`, `.dmg`, `.deb`)
 
 on Windows will generate installer exe via `Inno Setup`.
 
-on macOS will generate `.dmg` via `create-dmg`.
+on macOS will generate `.dmg` via `create-dmg`. Supports universal binaries with `--format universal` flag.
 
 on Linux will generate `.deb` via `dpkg-dev` and `.AppImage` via `linuxdeployqt`.
 
@@ -76,6 +76,17 @@ example directory structure.
 ```
 
 `.nimpacker_cache/` is cache direcotry for nimpacker.
+
+### Universal Binaries (macOS)
+
+For macOS, you can create universal binaries that work on both Intel and Apple Silicon Macs:
+
+```bash
+nimpacker build --target macos --format universal --icon data/logo.png --release
+nimpacker pack --target macos --format universal --icon data/logo.png --release
+```
+
+This will build separate x86_64 and ARM64 binaries and combine them using `lipo` into a single universal binary.
 
 `nimpacker/post_build.nims` is nimscript executed after build.
 
