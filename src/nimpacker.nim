@@ -28,8 +28,10 @@ const CACHE_DIR_NAME = ".nimpacker_cache"
 const CFBundleInfoDictionaryVersion = "6.0"
 
 proc getPkgInfo(): PackageInfo =
-  let r = execCmdEx("nimble dump --json --silent " & getCurrentDir())
-  let jsonNode = parseJson(r.output)
+  let (output, exitCode) = execCmdEx("nimble dump --json --silent --offline --noColor", workingDir = getCurrentDir())
+  if exitCode != 0:
+    quit("Error: Failed to get package info from nimble. Exit code: " & $exitCode & ", Output: " & output)
+  let jsonNode = parseJson(output)
   result = to(jsonNode, PackageInfo)
 
 proc getBinaryName(binPath: string): string =
