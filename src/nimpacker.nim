@@ -152,6 +152,12 @@ proc actualBuildMacos(release = false, flags: seq[string]): (string, int) =
   debugEcho finalCMD
   result = execCmdEx(finalCMD, options = {poUsePath})
 
+proc actualCompileMacos(release = false, file: string, flags: seq[string]): (string, int) =
+  var cmd = baseCmd(@["nimble", "c", file], release, flags)
+  let finalCMD = cmd.join(" ")
+  debugEcho finalCMD
+  result = execCmdEx(finalCMD, options = {poUsePath}, workingDir = getCurrentDir())
+
 proc cleanMacosBuild() =
   let pwd = getCurrentDir()
   let buildDir = pwd / "build" / "macos"
@@ -270,53 +276,26 @@ proc buildMacosUniversal(outDir: string, release = false,  flags: seq[string]) =
 
   # Build x86_64 binaries
   let flagsX86 = flags & @["--cpu:amd64"]
-  let (outputX86, exitCodeX86) = actualBuildMacos(release, flagsX86)
-  if exitCodeX86 != 0:
-    quit(outputX86)
-  debugEcho outputX86
-  
-  # Move x86_64 binaries to temp location immediately after build
-  for binPath in pkgInfo.bin:
-    let binName = getBinaryName(binPath)
-    let binDir = getBinaryDir(binPath)
-    let x86Dest = tmpDir / binName & "_x86_64"
-    
-    # Try different locations for the x86_64 binary
-    if fileExists(pwd / binPath):
-      moveFile(pwd / binPath, x86Dest)
-    elif binDir.len > 0 and fileExists(pwd / binDir / binName & ".out"):
-      moveFile(pwd / binDir / binName & ".out", x86Dest)
-      
-    else:
-      quit("Could not find binary for " & binPath)
-
   # Build ARM64 binaries
   let flagsArm64 = flags & @["--cpu:arm64"]
-  let (outputArm64, exitCodeArm64) = actualBuildMacos(release, flagsArm64)
-  if exitCodeArm64 != 0:
-    quit(outputArm64)
-  debugEcho outputArm64
-  
-  # Create universal binaries for each binary in the package
-  for binPath in pkgInfo.bin:
-    let binName = getBinaryName(binPath)
-    let binDir = getBinaryDir(binPath)
-    let arm64Dest = tmpDir / binName & "_arm64"
-    
-    # Try different locations for the arm64 binary
-    if fileExists(pwd / binPath):
-      moveFile(pwd / binPath, arm64Dest)
-    elif binDir.len > 0 and fileExists(pwd / binDir / binName & ".out"):
-      moveFile(pwd / binDir / binName & ".out", arm64Dest)
-    else:
-      quit("Could not find binary for " & binPath)
   
   for binPath in pkgInfo.bin:
-    let binName = getBinaryName(binPath)
-    let binDir = getBinaryDir(binPath)
-    let arm64Dest = tmpDir / binName & "_arm64"
-    let x86Dest = tmpDir / binName & "_x86_64"
-    let cmd = @["lipo", "-create", "-output", quoteShell(outDir / binName), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
+
+    let pkgInfo = getPkgInfo()
+    # TODO: if the bin file configured with `switch("app", "gui")` it will produce .app instead of binary
+    let arm64Dest = tmpDir / binPath & "_arm64"
+    let x86Dest = tmpDir / binPath & "_x86_64"
+    block arm64:
+      let (outputCompile, exitCodeCompile) = actualCompileMacos(release, pwd / pkgInfo.srcDir / binPath & ".nim", flagsArm64 & @["-o:" & arm64Dest])
+      if exitCodeCompile != 0:
+        quit(outputCompile)
+        debugEcho outputCompile
+    block amd64:
+      let (outputCompile, exitCodeCompile) = actualCompileMacos(release, pwd / pkgInfo.srcDir / binPath & ".nim", flagsX86 & @["-o:" & x86Dest])
+      if exitCodeCompile != 0:
+        quit(outputCompile)
+        debugEcho outputCompile
+    let cmd = @["lipo", "-create", "-output", quoteShell(outDir / binPath), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
     let (output, exitCode) = execCmdEx(cmd)
     debugEcho output
 

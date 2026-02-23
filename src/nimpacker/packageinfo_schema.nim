@@ -18,7 +18,7 @@ jsonSchema:
     # # requires*: seq[PkgTuple]
     # # bin*: Table[string, string]
     # binDir*: string
-    # srcDir*: string
+    srcDir: string
     # backend*: string
     # foreignDeps*: seq[string]
 
