@@ -126,7 +126,7 @@ proc getAppDir(target: string, release: bool, name = ""): string =
     let resName = if name.len > 0: name else: pkgInfo.name
     result = result / resName & ".app"
 
-proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] =
+proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int], useZopfli: bool = false): seq[ImageInfo] =
   let tempDir = getTempDir()
   let id = $genOid()
   result = sizes.map(proc (size: int): ImageInfo{.closure.} =
@@ -137,6 +137,8 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int]): seq[ImageInfo] 
     let ad = cast[ptr UnCheckedArray[byte]](img2.data[0].unsafeAddr)
     discard zopflipng.savePNG32(tmpName, toOpenArray(ad, 0, img2.data.len * 4 -
         1), img2.width, img2.height)
+    if not useZopfli:
+      return ImageInfo(size: size, filePath: tmpName)
     try:
       optimizePNG(tmpName, optName)
     except Exception as e:
@@ -257,7 +259,7 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
       copyFile(cachePath, path)
     else:
       let png = zopflipng.loadPNG32(app_logo)
-      let images = genImages(png, @(icns.REQUIRED_IMAGE_SIZES))
+      let images = genImages(png, @(icns.REQUIRED_IMAGE_SIZES), metaInfo.useZopfli)
       path = generateICNS(images.filterIt(it != default(ImageInfo)), outDir)
       copyFile(path, cachePath)
       discard images.mapIt(tryRemoveFile(it.filePath))
@@ -336,7 +338,7 @@ proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: 
   if logoExists:
     let png = zopflipng.loadPNG32(app_logo)
     let tempDir = getTempDir()
-    let images = genImages(png, @(ico.REQUIRED_IMAGE_SIZES))
+    let images = genImages(png, @(ico.REQUIRED_IMAGE_SIZES), metaInfo.useZopfli)
     icoPath = generateICO(images.filterIt(it != default(ImageInfo)), tempDir)
     discard images.mapIt(tryRemoveFile(it.filePath))
   var myflags: seq[string]

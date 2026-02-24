@@ -17,6 +17,7 @@ addVariable(myImpl, appUsesNonExemptEncryption, bool)
 addVariable(myImpl, supportedPlatforms, seq[string])
 addVariable(myImpl, minimumSystemVersion, string)
 addVariable(myImpl, copyright, string)
+addVariable(myImpl, useZopfli, bool)
 
 addVariable(myImpl, fileAssociations, seq[DocumentType])
 addVariable(myImpl, exportedTypeDeclarations, seq[ExportedTypeDeclaration])
@@ -95,6 +96,7 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     let supportedPlatforms = intr.getGlobalVariable[:seq[string]]("supportedPlatforms")
     let minimumSystemVersion = intr.getGlobalVariable[:string]("minimumSystemVersion")
     let copyright = intr.getGlobalVariable[:string]("copyright")
+    let useZopfli = intr.getGlobalVariable[:bool]("useZopfli")
     result.productName = productName
     result.appId = appId
     result.bundleIdentifier = bundleIdentifier
@@ -113,6 +115,7 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     result.supportedPlatforms = if supportedPlatforms.len > 0: supportedPlatforms else: @["MacOSX"]
     result.copyright = copyright
     result.minimumSystemVersion = minimumSystemVersion
+    result.useZopfli = useZopfli
 
 proc exec*(path: string) =
   if fileExists(path):

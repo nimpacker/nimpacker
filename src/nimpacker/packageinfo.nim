@@ -68,3 +68,4 @@ type MetaInfo* = ref object
   supportedPlatforms*: seq[string]
   copyright*: string
   minimumSystemVersion*: string
+  useZopfli*: bool
