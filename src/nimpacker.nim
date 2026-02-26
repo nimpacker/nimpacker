@@ -655,12 +655,18 @@ proc installLinuxdeployqt() =
   block download:
     const url = "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
     let (output, exitCode) = execCmdEx("curl -L -o linuxdeployqt-continuous-x86_64.AppImage " & url)
+    if exitCode != 0:
+      quit(output)
     debugEcho output
   block cp:
     let (output, exitCode) = execCmdEx("sudo cp linuxdeployqt-continuous-x86_64.AppImage /usr/local/bin/linuxdeployqt")
+    if exitCode != 0:
+      quit(output)
     debugEcho output
   block chmod:
-    let (output, exitCode) = execCmdEx("chmod +X /usr/local/bin/linuxdeployqt")
+    let (output, exitCode) = execCmdEx("chmod +x /usr/local/bin/linuxdeployqt")
+    if exitCode != 0:
+      quit(output)
     debugEcho output
 
 proc install(pkg: string) =
