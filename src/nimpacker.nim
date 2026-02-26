@@ -603,6 +603,8 @@ proc packMacos(release:bool, metaInfo: MetaInfo, suffix: string) =
   let cmd = getCreateDmg(pkgInfo, metaInfo, appDir, suffix)
   debugEcho cmd
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
+  if exitCode != 0:
+    quit(output)
   debugEcho output
 
 proc pack(target: string, icon = "logo.png",
