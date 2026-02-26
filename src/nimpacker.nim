@@ -74,29 +74,6 @@ proc moveAllBinaries(pkgInfo: PackageInfo, targetDir: string) =
       let (srcDir, srcFile) = splitPath(pwd / binPath)
       echo "Warning: Binary not found: ", binPath, " (tried: ", pwd / binPath, ", ", srcDir / (srcFile & ".out"), ")"
 
-proc moveAllBinariesWindows(pkgInfo: PackageInfo, targetDir: string) =
-  ## Move all binaries from the build to the target directory, preserving directory structure (Windows version)
-  let pwd = getCurrentDir()
-  
-  for binPath in pkgInfo.bin:
-    # For Windows, just use the exact path with .exe extension
-    let srcPath = pwd / binPath & ".exe"
-    
-    if fileExists(srcPath):
-      # For Windows, always use .exe extension in destination
-      let dstPath = targetDir / binPath & ".exe"
-      
-      # Create destination directory if it doesn't exist
-      let dstDir = dstPath.parentDir()
-      if dstDir.len > 0 and not dirExists(dstDir):
-        createDir(dstDir)
-      
-      # Move the file
-      moveFile(srcPath, dstPath)
-      echo "Moved Windows binary: ", srcPath, " -> ", dstPath
-    else:
-      echo "Warning: Windows binary not found: ", binPath & ".exe"
-
 proc getArch(flags: seq[string]): string = 
   for kind, key, val in getopt(flags):
     case kind
