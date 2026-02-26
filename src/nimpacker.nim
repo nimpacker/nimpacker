@@ -273,6 +273,8 @@ proc buildMacos(outDir: string, release = false, arch = "universal", flags: seq[
       
       let cmd = @["lipo", "-create", "-output", quoteShell(destPath), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
       let (output, exitCode) = execCmdEx(cmd)
+      if exitCodeCompile != 0:
+          quit(outputCompile)
       debugEcho output
       
     of "amd64", "x86_64":
@@ -300,6 +302,8 @@ proc runMacos(release = false, flags: seq[string]) =
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
+  if exitCode != 0:
+    quit(output)
   debugEcho output
 
 proc runWindows(release = false, flags: seq[string]) =
@@ -308,6 +312,8 @@ proc runWindows(release = false, flags: seq[string]) =
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
+  if exitCode != 0:
+    quit(output)
   debugEcho output
 
 proc runLinux(release = false, flags: seq[string]) =
@@ -316,6 +322,8 @@ proc runLinux(release = false, flags: seq[string]) =
   let finalCMD = cmd.concat(@["run", pkgInfo.name]).join(" ")
   debugEcho finalCMD
   let (output, exitCode) = execCmdEx(finalCMD)
+  if exitCode != 0:
+    quit(output)
   debugEcho output
 
 proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: seq[string]): string {.discardable.} =
@@ -469,7 +477,6 @@ proc packLinux(release:bool, icon: string) =
   createDebianTree(appDir)
   # Move all binaries to usr/bin, preserving directory structure
   for binPath in pkgInfo.bin:
-    let binName = getBinaryName(binPath)
     let binDir = getBinaryDir(binPath)
     let srcPath = appDir / binPath
     let dstPath = appDir / "usr" / "bin" / binPath
