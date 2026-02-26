@@ -148,12 +148,6 @@ proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int], useZopfli: bool 
     result = ImageInfo(size: size, filePath: optName)
   )
 
-proc actualBuildMacos(release = false, flags: seq[string]): (string, int) =
-  var cmd = baseCmd(@["nimble", "build", "--silent", "-y"], release, flags)
-  let finalCMD = cmd.join(" ")
-  debugEcho finalCMD
-  result = execCmdEx(finalCMD, options = {poUsePath})
-
 proc actualCompileMacos(release = false, file: string, flags: seq[string]): (string, int) =
   var cmd = baseCmd(@["nimble", "c", file], release, flags)
   let finalCMD = cmd.join(" ")
@@ -271,35 +265,57 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
   if not dirExists(binOutDir):
     createDir(binOutDir)
 
-proc buildMacosUniversal(outDir: string, release = false,  flags: seq[string]) =
+proc buildMacos(outDir: string, release = false, arch = "universal", flags: seq[string]) =
   let tmpDir = getTempDir()
   let pwd = getCurrentDir()
   let pkgInfo = getPkgInfo()
 
-  # Build x86_64 binaries
-  let flagsX86 = flags & @["--cpu:amd64"]
-  # Build ARM64 binaries
-  let flagsArm64 = flags & @["--cpu:arm64"]
-  
   for binPath in pkgInfo.bin:
-
-    let pkgInfo = getPkgInfo()
-    # TODO: if the bin file configured with `switch("app", "gui")` it will produce .app instead of binary
-    let arm64Dest = tmpDir / binPath & "_arm64"
-    let x86Dest = tmpDir / binPath & "_x86_64"
-    block arm64:
-      let (outputCompile, exitCodeCompile) = actualCompileMacos(release, pwd / pkgInfo.srcDir / binPath & ".nim", flagsArm64 & @["-o:" & arm64Dest])
+    let srcFile = pwd / pkgInfo.srcDir / binPath & ".nim"
+    let destPath = outDir / binPath
+    
+    case arch
+    of "universal":
+      # Build both x86_64 and ARM64 binaries, then combine with lipo
+      let flagsX86 = flags & @["--cpu:amd64"]
+      let flagsArm64 = flags & @["--cpu:arm64"]
+      let arm64Dest = tmpDir / binPath & "_arm64"
+      let x86Dest = tmpDir / binPath & "_x86_64"
+      
+      block arm64:
+        let (outputCompile, exitCodeCompile) = actualCompileMacos(release, srcFile, flagsArm64 & @["-o:" & arm64Dest])
+        if exitCodeCompile != 0:
+          quit(outputCompile)
+        debugEcho outputCompile
+      
+      block amd64:
+        let (outputCompile, exitCodeCompile) = actualCompileMacos(release, srcFile, flagsX86 & @["-o:" & x86Dest])
+        if exitCodeCompile != 0:
+          quit(outputCompile)
+        debugEcho outputCompile
+      
+      let cmd = @["lipo", "-create", "-output", quoteShell(destPath), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
+      let (output, exitCode) = execCmdEx(cmd)
+      debugEcho output
+      
+    of "amd64", "x86_64":
+      # Build only x86_64 binary
+      let flagsX86 = flags & @["--cpu:amd64"]
+      let (outputCompile, exitCodeCompile) = actualCompileMacos(release, srcFile, flagsX86 & @["-o:" & destPath])
       if exitCodeCompile != 0:
         quit(outputCompile)
-        debugEcho outputCompile
-    block amd64:
-      let (outputCompile, exitCodeCompile) = actualCompileMacos(release, pwd / pkgInfo.srcDir / binPath & ".nim", flagsX86 & @["-o:" & x86Dest])
+      debugEcho outputCompile
+      
+    of "arm64":
+      # Build only ARM64 binary
+      let flagsArm64 = flags & @["--cpu:arm64"]
+      let (outputCompile, exitCodeCompile) = actualCompileMacos(release, srcFile, flagsArm64 & @["-o:" & destPath])
       if exitCodeCompile != 0:
         quit(outputCompile)
-        debugEcho outputCompile
-    let cmd = @["lipo", "-create", "-output", quoteShell(outDir / binPath), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
-    let (output, exitCode) = execCmdEx(cmd)
-    debugEcho output
+      debugEcho outputCompile
+      
+    else:
+      quit("Unsupported architecture: " & arch)
 
 proc runMacos(release = false, flags: seq[string]) =
   let pkgInfo = getPkgInfo()
@@ -545,17 +561,9 @@ proc build(target: string, icon = "logo.png",
       let binOutDir = appDir / "Contents" / "MacOS"
       cleanMacosBuild()
       createDir(binOutDir)
-      if format == "universal":
-        buildMacosUniversal(binOutDir, release, flags)
-        createMacosApp(icon, release, metaInfo, flags)
-      else: 
-        let (output, exitCode) = actualBuildMacos(release, flags)
-        if exitCode == 0:
-          debugEcho output
-          moveAllBinaries(pkgInfo, binOutDir)
-          createMacosApp(icon, release, metaInfo, flags)
-        else:
-          debugEcho output
+      let arch = if format.len > 0: format else: "universal"
+      buildMacos(binOutDir, release, arch, flags)
+      createMacosApp(icon, release, metaInfo, flags)
     of "windows":
       buildWindows(icon, release, metaInfo, flags)
     of "linux":
@@ -625,22 +633,11 @@ proc pack(target: string, icon = "logo.png",
       let binOutDir = appDir / "Contents" / "MacOS"
       cleanMacosBuild()
       createDir(binOutDir)
-      if format == "universal":
-        buildMacosUniversal(binOutDir, release, flags)
-        createMacosApp(icon, release, metaInfo, flags)
-      else:
-        let (output, exitCode) = actualBuildMacos(release, flags)
-        if exitCode == 0:
-          debugEcho output
-          moveAllBinaries(pkgInfo, binOutDir)
-          createMacosApp(icon, release, metaInfo, flags)
-        else:
-          debugEcho output
+      let buildArch = if format.len > 0: format else: "universal"
+      buildMacos(binOutDir, release, buildArch, flags)
+      createMacosApp(icon, release, metaInfo, flags)
       postScript(post_build, target, release, flags, appDir)
-      if format == "universal":
-        packMacos(release, metaInfo, format)
-      else:
-        packMacos(release, metaInfo, arch)
+      packMacos(release, metaInfo, buildArch)
     of "windows":
       let icoPath = buildWindows(icon, release, metaInfo, flags)
       postScript(post_build, target, release, flags, appDir)
