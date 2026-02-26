@@ -273,8 +273,8 @@ proc buildMacos(outDir: string, release = false, arch = "universal", flags: seq[
       
       let cmd = @["lipo", "-create", "-output", quoteShell(destPath), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
       let (output, exitCode) = execCmdEx(cmd)
-      if exitCodeCompile != 0:
-          quit(outputCompile)
+      if exitCode != 0:
+        quit(output)
       debugEcho output
       
     of "amd64", "x86_64":
@@ -429,6 +429,7 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   createAppImageTree(appDir)
   moveFile(buildDir / subDir / pkgInfo.name, appDir / "usr" / "bin" / pkgInfo.name)
   let logoExists = fileExists(app_logo)
+  doAssert logoExists, "Logo file not found: " & app_logo
   let iconDir = appDir / "usr" / "share" / "icons" / "hicolor" / "48x48" / "apps"
   createDir iconDir
   copyFile(app_logo, iconDir / pkgInfo.name & ".png")
@@ -583,6 +584,8 @@ proc packWindows(release:bool, icoPath: string, metaInfo: MetaInfo) =
     quit("ISCC.exe not found, please ensure it's in `Path` environment variable or install it via `" & installCmd & "`")
   let cmd = "ISCC.exe /V1 " & issPath
   let (output, exitCode) = execCmdEx(cmd, options = {poUsePath, poStdErrToStdOut})
+  if exitCode != 0:
+    quit(output)
   var found = false
   for line in output.splitLines():
     if not found and line.startsWith("Compiler engine version"):
