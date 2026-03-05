@@ -1,4 +1,4 @@
-import std/[os, json, tables, osproc, strutils, sequtils, strformat, oids, options, distros, parseopt]
+import std/[os, json, tables, osproc, strutils, sequtils, strformat, oids, options, distros, parseopt, algorithm]
 import cligen
 import plists
 import icon
@@ -6,13 +6,13 @@ import icon/icns
 import icon/ico
 import imageman/images
 import imageman/colors
-import imageman/resize
 import zopflipng
 import rcedit
 include nimpacker/packageinfo_schema
 include nimpacker/cocoaappinfo
-import nimpacker/[packageinfo, scripter]
+import nimpacker/[packageinfo, scripter,resized_quality]
 import nimpacker/[innosetup_script, linux, macos, appimage, windows]
+
 
 when NimMajor >= 2:
   import checksums/md5
@@ -46,26 +46,26 @@ proc getBinaryDir(binPath: string): string =
 proc moveAllBinaries(pkgInfo: PackageInfo, targetDir: string) =
   ## Move all binaries from the build to the target directory, preserving directory structure (Linux/macOS version)
   let pwd = getCurrentDir()
-  
+
   for binPath in pkgInfo.bin:
     # Try the exact path first
     var srcPath = pwd / binPath
-    
+
     if not fileExists(srcPath):
       # Try with .out extension
       let (srcDir, srcFile) = splitPath(srcPath)
       srcPath = srcDir / (srcFile & ".out")
-    
+
     if fileExists(srcPath):
       # For Linux/macOS, preserve actual filename (including .out extension)
       let (_, srcFile) = splitPath(srcPath)
       let dstPath = targetDir / binPath
-      
+
       # Create destination directory if it doesn't exist
       let dstDir = dstPath.parentDir()
       if dstDir.len > 0 and not dirExists(dstDir):
         createDir(dstDir)
-      
+
       # Move the file as-is, preserving the actual filename
       let finalDstPath = dstDir / srcFile
       moveFile(srcPath, finalDstPath)
@@ -74,7 +74,7 @@ proc moveAllBinaries(pkgInfo: PackageInfo, targetDir: string) =
       let (srcDir, srcFile) = splitPath(pwd / binPath)
       echo "Warning: Binary not found: ", binPath, " (tried: ", pwd / binPath, ", ", srcDir / (srcFile & ".out"), ")"
 
-proc getArch(flags: seq[string]): string = 
+proc getArch(flags: seq[string]): string =
   for kind, key, val in getopt(flags):
     case kind
     of cmdArgument:
@@ -106,24 +106,44 @@ proc getAppDir(target: string, release: bool, name = ""): string =
 proc genImages[T](png: zopflipng.PNGResult[T], sizes: seq[int], useZopfli: bool = false): seq[ImageInfo] =
   let tempDir = getTempDir()
   let id = $genOid()
-  result = sizes.map(proc (size: int): ImageInfo{.closure.} =
+
+  # Sort sizes descending for processing (largest to smallest)
+  var sortedSizes = sizes
+  sortedSizes.sort(SortOrder.Descending)
+
+  result = @[]
+  var prevImg: Image[ColorRGBAU] = cast[MyImage](png)[]  # Start with original image
+
+  for size in sortedSizes:
     let tmpName = tempDir & id & $size & ".png"
     let optName = tempDir & id & $size & "opt" & ".png"
-    let img = cast[MyImage](png)
-    let img2 = img[].resizedBicubic(size, size)
+
+    # Resize from previous image (cascading downscale)
+    let img2 = prevImg.resizedHighQuality(size)
     let ad = cast[ptr UnCheckedArray[byte]](img2.data[0].unsafeAddr)
     discard zopflipng.savePNG32(tmpName, toOpenArray(ad, 0, img2.data.len * 4 -
         1), img2.width, img2.height)
+
+    # Store result for this size
+    var info: ImageInfo
     if not useZopfli:
-      return ImageInfo(size: size, filePath: tmpName)
-    try:
-      optimizePNG(tmpName, optName)
-    except Exception as e:
-      if e.msg != "not enough input to encode":
-        stderr.write(e.msg & "\n")
-      return ImageInfo(size: size, filePath: tmpName)
-    result = ImageInfo(size: size, filePath: optName)
-  )
+      info = ImageInfo(size: size, filePath: tmpName)
+    else:
+      try:
+        optimizePNG(tmpName, optName)
+        info = ImageInfo(size: size, filePath: optName)
+      except Exception as e:
+        if e.msg != "not enough input to encode":
+          stderr.write(e.msg & "\n")
+        info = ImageInfo(size: size, filePath: tmpName)
+
+    result.add(info)
+
+    # Use current output as input for next (smaller) size
+    prevImg = img2
+
+  # Sort result by size ascending (smallest to largest) for output
+  result.sort(proc (a, b: ImageInfo): int = cmp(a.size, b.size))
 
 proc actualCompileMacos(release = false, file: string, flags: seq[string]): (string, int) =
   var cmd = baseCmd(@["nimble", "c", file], release, flags)
@@ -143,7 +163,7 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
   let buildDir = pwd / "build" / "macos"
   let subDir = if release: "Release" else: "Debug"
   let productName = metaInfo.productName
-  let displayName = if productName.len > 0: productName else: pkgInfo.name 
+  let displayName = if productName.len > 0: productName else: pkgInfo.name
   let appDir = buildDir / subDir / displayName & ".app"
   createDir(appDir)
   let nSAppTransportSecurityJson = create(NSAppTransportSecurity,
@@ -182,13 +202,13 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
         })
     )
   )
-  
+
 
   let dt = if len(documentTypes) > 0: some(documentTypes) else: none(seq[DocumentType])
   # let sec = if len(wwwroot) > 0: some(nSAppTransportSecurityJson) else: none(NSAppTransportSecurity)
   let sec = none(NSAppTransportSecurity)
   let binDir = appDir / "Contents" / "MacOS"
-  
+
   let mainExecutable = if fileExists(binDir / (pkgInfo.name & ".out")):
       pkgInfo.name & ".out" elif fileExists(binDir / pkgInfo.name):
         pkgInfo.name else: quit("main executable not found")
@@ -211,7 +231,7 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
     NSHumanReadableCopyright = if metaInfo.copyright.len > 0: some(metaInfo.copyright) else: none(string),
     CFBundleIconName = none(string),
     CFBundleDocumentTypes = dt,
-    UTExportedTypeDeclarations = if len(exportedTypeDeclarations) > 0: 
+    UTExportedTypeDeclarations = if len(exportedTypeDeclarations) > 0:
       some(exportedTypeDeclarations) else: none(seq[UTExportedTypeDeclaration])
     )
   var plist = appInfo.JsonNode
@@ -250,7 +270,7 @@ proc buildMacos(outDir: string, release = false, arch = "universal", flags: seq[
   for binPath in pkgInfo.bin:
     let srcFile = pwd / pkgInfo.srcDir / binPath & ".nim"
     let destPath = outDir / binPath
-    
+
     case arch
     of "universal":
       # Build both x86_64 and ARM64 binaries, then combine with lipo
@@ -258,25 +278,25 @@ proc buildMacos(outDir: string, release = false, arch = "universal", flags: seq[
       let flagsArm64 = flags & @["--cpu:arm64"]
       let arm64Dest = tmpDir / binPath & "_arm64"
       let x86Dest = tmpDir / binPath & "_x86_64"
-      
+
       block arm64:
         let (outputCompile, exitCodeCompile) = actualCompileMacos(release, srcFile, flagsArm64 & @["-o:" & arm64Dest])
         if exitCodeCompile != 0:
           quit(outputCompile)
         debugEcho outputCompile
-      
+
       block amd64:
         let (outputCompile, exitCodeCompile) = actualCompileMacos(release, srcFile, flagsX86 & @["-o:" & x86Dest])
         if exitCodeCompile != 0:
           quit(outputCompile)
         debugEcho outputCompile
-      
+
       let cmd = @["lipo", "-create", "-output", quoteShell(destPath), quoteShell(x86Dest), quoteShell(arm64Dest)].join(" ")
       let (output, exitCode) = execCmdEx(cmd)
       if exitCode != 0:
         quit(output)
       debugEcho output
-      
+
     of "amd64", "x86_64":
       # Build only x86_64 binary
       let flagsX86 = flags & @["--cpu:amd64"]
@@ -284,7 +304,7 @@ proc buildMacos(outDir: string, release = false, arch = "universal", flags: seq[
       if exitCodeCompile != 0:
         quit(outputCompile)
       debugEcho outputCompile
-      
+
     of "arm64":
       # Build only ARM64 binary
       let flagsArm64 = flags & @["--cpu:arm64"]
@@ -292,7 +312,7 @@ proc buildMacos(outDir: string, release = false, arch = "universal", flags: seq[
       if exitCodeCompile != 0:
         quit(outputCompile)
       debugEcho outputCompile
-      
+
     else:
       quit("Unsupported architecture: " & arch)
 
@@ -356,31 +376,31 @@ proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: 
     debugEcho o
     # Handle multiple binaries with icon/manifest support
     let pwd = getCurrentDir()
-    
+
     for binPath in pkgInfo.bin:
       let binName = getBinaryName(binPath)
       let binDir = getBinaryDir(binPath)
-      
+
       # Try different possible source locations for Windows binaries
       var exePath = pwd / binName & ".exe"
       var found = false
-      
+
       if fileExists(exePath):
         found = true
       elif binDir.len > 0 and fileExists(pwd / binDir / binName & ".exe"):
         # Try with subdirectory
         exePath = pwd / binDir / binName & ".exe"
         found = true
-      
+
       if found:
         # Preserve directory structure in destination
         let dstPath = appDir / binPath & ".exe"
         let dstDir = appDir / binDir
-        
+
         # Create destination directory if it doesn't exist and binDir is not empty
         if binDir.len > 0 and not dirExists(dstDir):
           createDir(dstDir)
-        
+
         # Apply icon and manifest to the main binary (first one)
         if icoPath.len > 0 and fileExists(icoPath) and binName == getBinaryName(pkgInfo.bin[0]):
           var options = {"icon": icoPath}.toTable()
@@ -460,8 +480,8 @@ proc packAppImage(release = false, app_logo: string, metaInfo: MetaInfo) =
   let (output, exitCode) = execCmdEx(cmd)
   debugEcho output
 
-const Perm755 = {fpUserExec, fpUserWrite, fpUserRead, 
-                          fpGroupExec, fpGroupRead, 
+const Perm755 = {fpUserExec, fpUserWrite, fpUserRead,
+                          fpGroupExec, fpGroupRead,
                           fpOthersExec, fpOthersRead}
 
 proc convertLineEndings(filename: string, dest: string) =
@@ -481,13 +501,13 @@ proc packLinux(release:bool, icon: string) =
     let binDir = getBinaryDir(binPath)
     let srcPath = appDir / binPath
     let dstPath = appDir / "usr" / "bin" / binPath
-    
+
     # Create destination directory if it doesn't exist and binDir is not empty
     if binDir.len > 0:
       let dstDir = appDir / "usr" / "bin" / binDir
       if not dirExists(dstDir):
         createDir(dstDir)
-    
+
     if fileExists(srcPath):
       moveFile(srcPath, dstPath)
       echo "Moved binary to usr/bin: ", srcPath, " -> ", dstPath
@@ -504,7 +524,7 @@ proc packLinux(release:bool, icon: string) =
     if fileExists("nimpacker" / "DEBIAN" / script):
       convertLineEndings("nimpacker" / "DEBIAN" / script, appDir / "DEBIAN" / script)
       setFilePermissions(appDir / "DEBIAN" / script, Perm755)
-      
+
   let baseControl = getControlBasic(pkgInfo, metaInfo)
   writeFile(appDir / "DEBIAN" / "control", baseControl)
   setFilePermissions(appDir / "DEBIAN" / "control", Perm755)
