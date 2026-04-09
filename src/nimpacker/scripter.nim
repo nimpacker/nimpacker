@@ -1,4 +1,4 @@
-import os
+import os, json
 import nimscripter, nimscripter/[variables, vmops], puppy, webby
 import ./packageinfo
 
@@ -29,6 +29,41 @@ addVariable(myImpl, linuxDepends, seq[string])
 addVariable(myImpl, runAsAdmin, bool)
 addVariable(myImpl, privilegesRequired, PrivilegesRequired)
 addVariable(myImpl, executionLevel, ExecutionLevel)
+
+# Privacy - Camera/Microphone
+addVariable(myImpl, NSCameraUsageDescription, string)
+addVariable(myImpl, NSMicrophoneUsageDescription, string)
+# Privacy - Location
+addVariable(myImpl, NSLocationUsageDescription, string)
+addVariable(myImpl, NSLocationWhenInUseUsageDescription, string)
+addVariable(myImpl, NSLocationAlwaysUsageDescription, string)
+# Privacy - Contacts/Calendars/Reminders
+addVariable(myImpl, NSContactsUsageDescription, string)
+addVariable(myImpl, NSCalendarsUsageDescription, string)
+addVariable(myImpl, NSRemindersUsageDescription, string)
+# Privacy - Photo/Media
+addVariable(myImpl, NSPhotoLibraryUsageDescription, string)
+addVariable(myImpl, NSAppleMusicUsageDescription, string)
+# Privacy - Other
+addVariable(myImpl, NSBluetoothAlwaysUsageDescription, string)
+addVariable(myImpl, NSBluetoothPeripheralUsageDescription, string)
+addVariable(myImpl, NSSpeechRecognitionUsageDescription, string)
+addVariable(myImpl, NSCameraReactionEffectEnabled, bool)
+# App Behavior
+addVariable(myImpl, LSUIElement, bool)
+addVariable(myImpl, LSBackgroundOnly, bool)
+addVariable(myImpl, LSMultipleInstancesProhibited, bool)
+addVariable(myImpl, NSSupportsAutomaticTermination, bool)
+addVariable(myImpl, NSSupportsSuddenTermination, bool)
+# Security
+addVariable(myImpl, CSResourcesFileMapped, bool)
+# User Interface
+addVariable(myImpl, NSRequiresAquaSystemAppearance, bool)
+addVariable(myImpl, NSAccentColorName, string)
+addVariable(myImpl, NSSupportsLiveActivities, bool)
+# Help
+addVariable(myImpl, CFBundleHelpBookFolder, string)
+addVariable(myImpl, CFBundleHelpBookName, string)
 exportTo(myImpl, webby.HttpHeaders)
 exportTo(myImpl, puppy.Response)
 
@@ -70,7 +105,7 @@ exportTo(myImpl, httpHead)
 addVmops(myImpl)
 
 const
-  scriptProcs = implNimScriptModule(myImpl)
+  scriptProcs* = implNimScriptModule(myImpl)
   DefaultMetaPath* = "nimpacker" / "meta.nims"
 
 proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
@@ -116,6 +151,40 @@ proc getMetaInfo*(metaPath = DefaultMetaPath): MetaInfo =
     result.copyright = copyright
     result.minimumSystemVersion = minimumSystemVersion
     result.useZopfli = useZopfli
+    # Privacy - Camera/Microphone
+    result.NSCameraUsageDescription = intr.getGlobalVariable[:string]("NSCameraUsageDescription")
+    result.NSMicrophoneUsageDescription = intr.getGlobalVariable[:string]("NSMicrophoneUsageDescription")
+    # Privacy - Location
+    result.NSLocationUsageDescription = intr.getGlobalVariable[:string]("NSLocationUsageDescription")
+    result.NSLocationWhenInUseUsageDescription = intr.getGlobalVariable[:string]("NSLocationWhenInUseUsageDescription")
+    result.NSLocationAlwaysUsageDescription = intr.getGlobalVariable[:string]("NSLocationAlwaysUsageDescription")
+    # Privacy - Contacts/Calendars/Reminders
+    result.NSContactsUsageDescription = intr.getGlobalVariable[:string]("NSContactsUsageDescription")
+    result.NSCalendarsUsageDescription = intr.getGlobalVariable[:string]("NSCalendarsUsageDescription")
+    result.NSRemindersUsageDescription = intr.getGlobalVariable[:string]("NSRemindersUsageDescription")
+    # Privacy - Photo/Media
+    result.NSPhotoLibraryUsageDescription = intr.getGlobalVariable[:string]("NSPhotoLibraryUsageDescription")
+    result.NSAppleMusicUsageDescription = intr.getGlobalVariable[:string]("NSAppleMusicUsageDescription")
+    # Privacy - Other
+    result.NSBluetoothAlwaysUsageDescription = intr.getGlobalVariable[:string]("NSBluetoothAlwaysUsageDescription")
+    result.NSBluetoothPeripheralUsageDescription = intr.getGlobalVariable[:string]("NSBluetoothPeripheralUsageDescription")
+    result.NSSpeechRecognitionUsageDescription = intr.getGlobalVariable[:string]("NSSpeechRecognitionUsageDescription")
+    result.NSCameraReactionEffectEnabled = intr.getGlobalVariable[:bool]("NSCameraReactionEffectEnabled")
+    # App Behavior
+    result.LSUIElement = intr.getGlobalVariable[:bool]("LSUIElement")
+    result.LSBackgroundOnly = intr.getGlobalVariable[:bool]("LSBackgroundOnly")
+    result.LSMultipleInstancesProhibited = intr.getGlobalVariable[:bool]("LSMultipleInstancesProhibited")
+    result.NSSupportsAutomaticTermination = intr.getGlobalVariable[:bool]("NSSupportsAutomaticTermination")
+    result.NSSupportsSuddenTermination = intr.getGlobalVariable[:bool]("NSSupportsSuddenTermination")
+    # Security
+    result.CSResourcesFileMapped = intr.getGlobalVariable[:bool]("CSResourcesFileMapped")
+    # User Interface
+    result.NSRequiresAquaSystemAppearance = intr.getGlobalVariable[:bool]("NSRequiresAquaSystemAppearance")
+    result.NSAccentColorName = intr.getGlobalVariable[:string]("NSAccentColorName")
+    result.NSSupportsLiveActivities = intr.getGlobalVariable[:bool]("NSSupportsLiveActivities")
+    # Help
+    result.CFBundleHelpBookFolder = intr.getGlobalVariable[:string]("CFBundleHelpBookFolder")
+    result.CFBundleHelpBookName = intr.getGlobalVariable[:string]("CFBundleHelpBookName")
 
 proc exec*(path: string) =
   if fileExists(path):

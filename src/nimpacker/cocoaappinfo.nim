@@ -62,3 +62,37 @@ jsonSchema:
     CFBundleIconName ?: string
     CFBundleDocumentTypes ?: DocumentType[]
     UTExportedTypeDeclarations ?: UTExportedTypeDeclaration[]
+    # Privacy - Camera/Microphone
+    NSCameraUsageDescription?: string
+    NSMicrophoneUsageDescription?: string
+    # Privacy - Location
+    NSLocationUsageDescription?: string
+    NSLocationWhenInUseUsageDescription?: string
+    NSLocationAlwaysUsageDescription?: string
+    # Privacy - Contacts/Calendars/Reminders
+    NSContactsUsageDescription?: string
+    NSCalendarsUsageDescription?: string
+    NSRemindersUsageDescription?: string
+    # Privacy - Photo/Media
+    NSPhotoLibraryUsageDescription?: string
+    NSAppleMusicUsageDescription?: string
+    # Privacy - Other
+    NSBluetoothAlwaysUsageDescription?: string
+    NSBluetoothPeripheralUsageDescription?: string
+    NSSpeechRecognitionUsageDescription?: string
+    NSCameraReactionEffectEnabled?: bool
+    # App Behavior
+    LSUIElement?: bool
+    LSBackgroundOnly?: bool
+    LSMultipleInstancesProhibited?: bool
+    NSSupportsAutomaticTermination?: bool
+    NSSupportsSuddenTermination?: bool
+    # Security
+    CSResourcesFileMapped?: bool
+    # User Interface
+    NSRequiresAquaSystemAppearance?: bool
+    NSAccentColorName?: string
+    NSSupportsLiveActivities?: bool
+    # Help
+    CFBundleHelpBookFolder?: string
+    CFBundleHelpBookName?: string

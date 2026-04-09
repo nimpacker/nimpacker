@@ -220,7 +220,41 @@ proc createMacosApp(app_logo: string, release = false, metaInfo: MetaInfo = defa
     CFBundleIconName = none(string),
     CFBundleDocumentTypes = dt,
     UTExportedTypeDeclarations = if len(exportedTypeDeclarations) > 0:
-      some(exportedTypeDeclarations) else: none(seq[UTExportedTypeDeclaration])
+      some(exportedTypeDeclarations) else: none(seq[UTExportedTypeDeclaration]),
+    # Privacy - Camera/Microphone
+    NSCameraUsageDescription = if metaInfo.NSCameraUsageDescription.len > 0: some(metaInfo.NSCameraUsageDescription) else: none(string),
+    NSMicrophoneUsageDescription = if metaInfo.NSMicrophoneUsageDescription.len > 0: some(metaInfo.NSMicrophoneUsageDescription) else: none(string),
+    # Privacy - Location
+    NSLocationUsageDescription = if metaInfo.NSLocationUsageDescription.len > 0: some(metaInfo.NSLocationUsageDescription) else: none(string),
+    NSLocationWhenInUseUsageDescription = if metaInfo.NSLocationWhenInUseUsageDescription.len > 0: some(metaInfo.NSLocationWhenInUseUsageDescription) else: none(string),
+    NSLocationAlwaysUsageDescription = if metaInfo.NSLocationAlwaysUsageDescription.len > 0: some(metaInfo.NSLocationAlwaysUsageDescription) else: none(string),
+    # Privacy - Contacts/Calendars/Reminders
+    NSContactsUsageDescription = if metaInfo.NSContactsUsageDescription.len > 0: some(metaInfo.NSContactsUsageDescription) else: none(string),
+    NSCalendarsUsageDescription = if metaInfo.NSCalendarsUsageDescription.len > 0: some(metaInfo.NSCalendarsUsageDescription) else: none(string),
+    NSRemindersUsageDescription = if metaInfo.NSRemindersUsageDescription.len > 0: some(metaInfo.NSRemindersUsageDescription) else: none(string),
+    # Privacy - Photo/Media
+    NSPhotoLibraryUsageDescription = if metaInfo.NSPhotoLibraryUsageDescription.len > 0: some(metaInfo.NSPhotoLibraryUsageDescription) else: none(string),
+    NSAppleMusicUsageDescription = if metaInfo.NSAppleMusicUsageDescription.len > 0: some(metaInfo.NSAppleMusicUsageDescription) else: none(string),
+    # Privacy - Other
+    NSBluetoothAlwaysUsageDescription = if metaInfo.NSBluetoothAlwaysUsageDescription.len > 0: some(metaInfo.NSBluetoothAlwaysUsageDescription) else: none(string),
+    NSBluetoothPeripheralUsageDescription = if metaInfo.NSBluetoothPeripheralUsageDescription.len > 0: some(metaInfo.NSBluetoothPeripheralUsageDescription) else: none(string),
+    NSSpeechRecognitionUsageDescription = if metaInfo.NSSpeechRecognitionUsageDescription.len > 0: some(metaInfo.NSSpeechRecognitionUsageDescription) else: none(string),
+    NSCameraReactionEffectEnabled = some(metaInfo.NSCameraReactionEffectEnabled),
+    # App Behavior
+    LSUIElement = some(metaInfo.LSUIElement),
+    LSBackgroundOnly = some(metaInfo.LSBackgroundOnly),
+    LSMultipleInstancesProhibited = some(metaInfo.LSMultipleInstancesProhibited),
+    NSSupportsAutomaticTermination = some(metaInfo.NSSupportsAutomaticTermination),
+    NSSupportsSuddenTermination = some(metaInfo.NSSupportsSuddenTermination),
+    # Security
+    CSResourcesFileMapped = some(metaInfo.CSResourcesFileMapped),
+    # User Interface
+    NSRequiresAquaSystemAppearance = some(metaInfo.NSRequiresAquaSystemAppearance),
+    NSAccentColorName = if metaInfo.NSAccentColorName.len > 0: some(metaInfo.NSAccentColorName) else: none(string),
+    NSSupportsLiveActivities = some(metaInfo.NSSupportsLiveActivities),
+    # Help
+    CFBundleHelpBookFolder = if metaInfo.CFBundleHelpBookFolder.len > 0: some(metaInfo.CFBundleHelpBookFolder) else: none(string),
+    CFBundleHelpBookName = if metaInfo.CFBundleHelpBookName.len > 0: some(metaInfo.CFBundleHelpBookName) else: none(string)
     )
   var plist = appInfo.JsonNode
 

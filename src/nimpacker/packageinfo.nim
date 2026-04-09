@@ -69,3 +69,29 @@ type MetaInfo* = ref object
   copyright*: string
   minimumSystemVersion*: string
   useZopfli*: bool
+  # macOS Info.plist privacy and app configuration keys
+  NSCameraUsageDescription*: string
+  NSMicrophoneUsageDescription*: string
+  NSLocationUsageDescription*: string
+  NSLocationWhenInUseUsageDescription*: string
+  NSLocationAlwaysUsageDescription*: string
+  NSContactsUsageDescription*: string
+  NSCalendarsUsageDescription*: string
+  NSRemindersUsageDescription*: string
+  NSPhotoLibraryUsageDescription*: string
+  NSAppleMusicUsageDescription*: string
+  NSBluetoothAlwaysUsageDescription*: string
+  NSBluetoothPeripheralUsageDescription*: string
+  NSSpeechRecognitionUsageDescription*: string
+  NSCameraReactionEffectEnabled*: bool
+  LSUIElement*: bool
+  LSBackgroundOnly*: bool
+  LSMultipleInstancesProhibited*: bool
+  NSSupportsAutomaticTermination*: bool
+  NSSupportsSuddenTermination*: bool
+  CSResourcesFileMapped*: bool
+  NSRequiresAquaSystemAppearance*: bool
+  NSAccentColorName*: string
+  NSSupportsLiveActivities*: bool
+  CFBundleHelpBookFolder*: string
+  CFBundleHelpBookName*: string
