@@ -399,7 +399,10 @@ proc buildWindows(app_logo: string, release = false, metaInfo: MetaInfo, flags: 
     # Handle multiple binaries with icon/manifest support
     let pwd = getCurrentDir()
 
-    for binPath in pkgInfo.bin:
+    for binPath0 in pkgInfo.bin:
+      # nimble dump on Windows reports bin WITH the .exe suffix;
+      # strip it so we don't probe for "x.exe.exe"
+      let binPath = if binPath0.endsWith(".exe"): binPath0[0 ..< ^4] else: binPath0
       let binName = getBinaryName(binPath)
       let binDir = getBinaryDir(binPath)
 
@@ -577,6 +580,9 @@ proc postScript(post_build: string, target: string, release: bool, flags:seq[str
 proc build(target: string, icon = "logo.png",
     post_build = "nimpacker" / "post_build.nims",
     release = false, format = "", arch = "", flags: seq[string]): int =
+  ## Build the application for the specified target platform.
+  ## --target: Target platform. Options: macos (builds .app bundle), windows (builds .exe), linux (builds .deb)
+  ## --format: (linux only) Package format to build. Options: deb (default)
   let metaInfo = getMetaInfo()
   let pkgInfo = getPkgInfo()
   let productName = metaInfo.productName
@@ -600,6 +606,8 @@ proc build(target: string, icon = "logo.png",
   postScript(post_build, target, release, flags, appDir)
 
 proc run(target: string, release = false, flags: seq[string]): int =
+  ## Run the application for the specified target platform.
+  ## --target: Target platform. Options: macos, windows, linux
   case target:
     of "macos":
       runMacos(release, flags)
@@ -652,6 +660,9 @@ proc packMacos(release:bool, metaInfo: MetaInfo, suffix: string) =
 proc pack(target: string, icon = "logo.png",
     post_build =  "nimpacker" / "post_build.nims",
     release = false, format = "", arch = "", flags: seq[string]): int =
+  ## Pack the application for the specified target platform.
+  ## --target: Target platform. Options: macos (packages .dmg), windows (packages InnoSetup installer), linux (packages .deb or .AppImage)
+  ## --format: (linux only) Package format to pack. Options: deb (default), appimage
   let metaInfo = getMetaInfo()
   let pkgInfo = getPkgInfo()
   let productName = metaInfo.productName
